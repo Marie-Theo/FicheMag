@@ -1,0 +1,42 @@
+# Translation file
+
+#
+# Generic
+#
+
+# Module label 'ModuleFicheMagName'
+ModuleFicheMagName = FicheMag
+# Module description 'ModuleFicheMagDesc'
+ModuleFicheMagDesc = FicheMag description
+
+#
+# Admin page
+#
+FicheMagSetup = FicheMag setup
+Settings = Settings
+FicheMagSetupPage = FicheMag setup page
+NewSection=New section
+FICHEMAG_MYPARAM1 = My param 1
+FICHEMAG_MYPARAM1Tooltip = My param 1 tooltip
+FICHEMAG_MYPARAM2=My param 2
+FICHEMAG_MYPARAM2Tooltip=My param 2 tooltip
+
+
+#
+# About page
+#
+About = About
+FicheMagAbout = About FicheMag
+FicheMagAboutPage = FicheMag about page
+
+#
+# Sample page
+#
+FicheMagArea = Home FicheMag
+MyPageName = My page name
+
+#
+# Sample widget
+#
+MyWidget = My widget
+MyWidgetDescription = My widget description
