@@ -120,11 +120,12 @@ class modFicheMag extends DolibarrModules
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 			/* BEGIN MODULEBUILDER HOOKSCONTEXTS */
 			'hooks' => array(
-				//   'data' => array(
-				//       'hookcontext1',
-				//       'hookcontext2',
-				//   ),
-				//   'entity' => '0',
+				  'data' => array(
+				      'productcard',
+				    //   'globalcard',
+					//   'addMoreActionsButtons',
+				  ),
+				  'entity' => '0',
 			),
 			/* END MODULEBUILDER HOOKSCONTEXTS */
 			// Set this to 1 if features of module are opened to external users
@@ -320,21 +321,21 @@ class modFicheMag extends DolibarrModules
 		$r = 0;
 		// Add here entries to declare new menus
 		/* BEGIN MODULEBUILDER TOPMENU */
-		$this->menu[$r++] = array(
-			'fk_menu' => '', // Will be stored into mainmenu + leftmenu. Use '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-			'type' => 'top', // This is a Top menu entry
-			'titre' => 'ModuleFicheMagName',
-			'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle"'),
-			'mainmenu' => 'fichemag',
-			'leftmenu' => '',
-			'url' => '/fichemag/fichemagindex.php',
-			'langs' => 'fichemag@fichemag', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-			'position' => 1000 + $r,
-			'enabled' => 'isModEnabled("fichemag")', // Define condition to show or hide menu entry. Use 'isModEnabled("fichemag")' if entry must be visible if module is enabled.
-			'perms' => '1', // Use 'perms'=>'$user->hasRight("fichemag", "myobject", "read")' if you want your menu with a permission rules
-			'target' => '',
-			'user' => 2, // 0=Menu for internal users, 1=external users, 2=both
-		);
+		// $this->menu[$r++] = array(
+		// 	'fk_menu' => '', // Will be stored into mainmenu + leftmenu. Use '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+		// 	'type' => 'top', // This is a Top menu entry
+		// 	'titre' => 'ModuleFicheMagName',
+		// 	'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle"'),
+		// 	'mainmenu' => 'fichemag',
+		// 	'leftmenu' => '',
+		// 	'url' => '/fichemag/fichemagindex.php',
+		// 	'langs' => 'fichemag@fichemag', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+		// 	'position' => 1000 + $r,
+		// 	'enabled' => 'isModEnabled("fichemag")', // Define condition to show or hide menu entry. Use 'isModEnabled("fichemag")' if entry must be visible if module is enabled.
+		// 	'perms' => '1', // Use 'perms'=>'$user->hasRight("fichemag", "myobject", "read")' if you want your menu with a permission rules
+		// 	'target' => '',
+		// 	'user' => 2, // 0=Menu for internal users, 1=external users, 2=both
+		// );
 		/* END MODULEBUILDER TOPMENU */
 
 		/* BEGIN MODULEBUILDER LEFTMENU MYOBJECT */
