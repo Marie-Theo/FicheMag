@@ -100,20 +100,18 @@ class ActionsFicheMag extends CommonHookActions
 	 * @param	HookManager			$hookmanager	Hook manager propagated to allow calling another hook
 	 * @return	int									Return integer < 0 on error, 0 on success, 1 to replace standard code
 	 */
-	public function doActions($parameters, &$object, &$action, $hookmanager)
+	public function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
 	{
+		global $conf, $langs, $user;
+ 
 		$error = 0; // Error counter
+ 
+		$file = "/custom/fichemag/class/generate_output.class.php?id=" . dol_sanitizeFileName($object->id);
 
-		// print_r($parameters);
-		// echo "action: " . $action;
-		// print_r($object);
-		if (in_array($parameters['currentcontext'], explode(':', $parameters['context']))) {	    // do something only for the context 'somecontext1' or 'somecontext2'
 
-			if ($action != 'create' && $action != 'edit') { // verification que l'on ne soit pas dans le create ou le modifier
-				// Do what you want here...
-				// You can for example load and use call global vars like $fieldstosearchall to overwrite them, or update the database depending on $action and GETPOST values.
-				
-			}
+		if (in_array($parameters['currentcontext'], array('productcard'))) {	    // do something only for the context 'somecontext1' or 'somecontext2'
+
+			print '<a class="butAction" href="' . $file . '" target="_blank">Create PDF</a>';
 
 			if (!$error) {
 				$this->results = array('myreturn' => 999);

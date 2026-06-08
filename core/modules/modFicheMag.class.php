@@ -122,8 +122,6 @@ class modFicheMag extends DolibarrModules
 			'hooks' => array(
 				  'data' => array(
 				      'productcard',
-				    //   'globalcard',
-					//   'addMoreActionsButtons',
 				  ),
 				  'entity' => '0',
 			),
