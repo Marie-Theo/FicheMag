@@ -106,8 +106,7 @@ class ActionsFicheMag extends CommonHookActions
  
 		$error = 0; // Error counter
  
-		$file = "/custom/fichemag/class/generate_output.class.php?id=" . dol_sanitizeFileName($object->id);
-
+		$file = "/custom/fichemag/class/generate_output.class.php?id=" . dol_sanitizeFileName($object->id) . "&label=" . $object->label;
 
 		if (in_array($parameters['currentcontext'], array('productcard'))) {	    // do something only for the context 'somecontext1' or 'somecontext2'
 

@@ -6,11 +6,19 @@ require_once(DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php');
 
 class LabelPrint
 {
-    public $labelFormat;
-    public $labelUnit;
-    public $file;
+    #### format / meta data
+    private Array $labelFormat;
+    private string $labelUnit;
+    private string $file;
+
+    private $font_family = "helvetica";
+    private $font_style = "B";
+    private $font_size=20;
+
+    #### content:
+    private $title;
     
-    public function __construct($file)
+    public function __construct(string $file)
     {
         $this->labelFormat = array(70, 30);
         $this->labelUnit = 'mm';
@@ -21,7 +29,7 @@ class LabelPrint
 
         $pdf =  pdf_getInstance($this->labelFormat, $this->labelUnit);
         $pdf->AddPage();
-        $pdf->SetFont('', '' , 10);
+        $pdf->SetFont($this->font_family, $this->font_style , $this->font_size);
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false);
         $pdf->SetXY(0, 0);
