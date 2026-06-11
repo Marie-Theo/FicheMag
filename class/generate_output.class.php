@@ -22,6 +22,7 @@ $object = new Product($db);
 if ($id > 0 || !empty($ref)) {
 	$result = $object->fetch($id, (string) $ref);
     $price_ttc = dol_textishtml($object->price_ttc) ? $object->price_ttc : dol_nl2br($object->price_ttc, 1, true);
+    $price_ttc = price($price_ttc);
     $barcode = dol_textishtml($object->barcode) ? $object->barcode : dol_nl2br($object->barcode, 1, true);
     $descriptionTemp = dol_textishtml($object->description) ? $object->description : dol_nl2br($object->description, 1, true);
     $descriptionTemp = preg_split('<br>', $descriptionTemp);
@@ -38,31 +39,32 @@ $file = $dir . "/produit_" . $id . ".pdf";
 ## description
 $description=array();
 $accessoire = false;
+$Marque='Undefined';
+$Message_Top = "<p style='margin:20px;'>ATTENTION, COMPTE TENU DES PERTURBATIONS ACTUELLES DU MARCHÉ INFORMATIQUE, LE PRIX INDIQUÉ SUR CETTE FICHE <u>N'EST PAS FIXE POUR UNE DURÉE INDÉTERMINÉE</u>. <u style='color:red;'>LE PRIX QUI S'APPLIQUE EST CELUI AFFICHÉ EN MAGASIN LE JOUR DE LA VENTE</u>.</p>";
+$ContactHoraire = array(
+                "<u>CONTACT</u> - <u>HORAIRES</u><br>",
+                "02.33.60.89.01 contact@misinformatique.com<br>",
+                "Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30<br>",
+                "Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30<br>",
+                "Fermé le Lundi matin, le dimanche et les jours fériés",
+                );
 
 foreach($descriptionTemp as $caracteristique){
-    if (strlen($caracteristique) <= 2){
-        continue;
-    }
-    if (str_contains($caracteristique[0], ' ')){
-        while (str_contains($caracteristique[0], ' ')){
-            $caracteristique = substr_replace($caracteristique, '', 0, 1);
-        }
-    } else {
-        $caracteristique = substr_replace($caracteristique, '', 0, 2);
-    }
     if (str_contains($caracteristique, '---')) {
-        if (!isset($description["Label"])){
-            $description["Label"] = GETPOST('label');
+        if (!isset($Label)){
+            $Label = GETPOST('label');
         }
         continue;
-    } else if (!isset($description["Label"])){
-        $description["Label"] = $caracteristique;
-        // continue;
+    } else if (!isset($Label)){
+        $Label = $caracteristique;
     } else if (str_contains($caracteristique, ':')){
         $temp = explode(':', $caracteristique);
-        if (str_contains(strtolower($temp[0]), 'accessoire')){$accessoire=true;}
-        $description["$temp[0]"] = $temp[1];
-        // continue;
+        if (str_contains(strtolower($caracteristique), 'marque')){
+            $Marque=$temp[1];
+        } else {
+            if (str_contains(strtolower($temp[0]), 'accessoire')){$accessoire=true;}
+            $description["$temp[0]"] = $temp[1];
+        }
     }
     if (str_contains(strtolower($caracteristique), 'sacoche') && $accessoire==false){
         $description["Accessoire"] = isset($description["Accessoire"]) ? $description["Accessoire"] . '/ Sacoche ' : 'Sacoche ';
@@ -83,17 +85,17 @@ $html = "<center>
             </td>
             <td  style='width:70%'>
                 <center>
-                    <h1>" . $description["Marque"] . "</h1>
+                    <h1>" . $Marque . "</h1>
                 </center>
             </td>
         </tr>
         <tr>
             <td style='width:70%;'>
-                ATTENTION, COMPTE TENU DES PERTURBATIONS ACTUELLES DU MARCHÉ INFORMATIQUE, LE PRIX INDIQUÉ SUR CETTE FICHE <u>N'EST PAS FIXE POUR UNE DURÉE INDÉTERMINÉE</u>. <u style='color:red;'>LE PRIX QUI S'APPLIQUE EST CELUI AFFICHÉ EN MAGASIN LE JOUR DE LA VENTE</u>.
+                $Message_Top
             </td>
         </tr>
     </table>
-    <h2><u>" . $description["Label"] . "</u></h2><br>";
+    <h2><u>" . $Label . "</u></h2><br>";
 
 $cpt = 0;
 $html .= '<table border=1 cellpadding="5" style="border:1px solid black;width:85%;border-collapse: collapse;">';
@@ -117,18 +119,18 @@ $html .= "</table><br>";
 $html .= "<table border='1' cellspacing='10' cellpadding='10' style='border:1px solid black;border-collapse: collapse;font-size:20;'>
     <tr>
         <td>
-            <center>
-                <u>CONTACT</u> - <u>HORAIRES</u><br>
-                02.33.60.89.01 contact@misinformatique.com<br>
-                Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30<br>
-                Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30<br>
-            Fermé le Lundi matin, le dimanche et les jours fériés
-            </center>
+            <center>";
+
+foreach($ContactHoraire as $ligne){
+    $html .= $ligne;
+}
+
+$html .=    "</center>
         </td>
     </tr>
 </table><br>
 
-<table style='border:1px solid red;'>
+<table cellspacing='0' cellpadding='20' style='border:1px solid red;width:80%;'>
 
     <tr>
         <td>
@@ -144,7 +146,17 @@ $html .= "<table border='1' cellspacing='10' cellpadding='10' style='border:1px 
 echo $html;
 
 $labelPrint = new LabelPrint($file);
-$labelPrint->setContentHTML($html);
+$labelPrint->setMarque($Marque);
+// $img = file_get_contents('/viewimage.php?cache=1&modulepart=mycompany&file=logos%2Fthumbs%2Flogo+2_small.jpg');
+// $labelPrint->setLogo(DOL_DOCUMENT_ROOT . '/viewimage.php?cache=1&modulepart=mycompany&file=logos%2Fthumbs%2Flogo+2_small.jpg');
+$labelPrint->setLogo(DOL_DOCUMENT_ROOT . '/../documents/mycompany/logos/logo 2.jpg');
+$labelPrint->setMessage_Top($Message_Top);
+$labelPrint->setProprieter($description);
+$labelPrint->setContactHoraire($ContactHoraire);
+$labelPrint->setCodeBar("/viewimage.php?modulepart=barcode&generator=tcpdfbarcode&code=" . $barcode . "&encoding=EAN13");
+// $labelPrint->setQRCode();
+$labelPrint->setPrix($price_ttc);
+
 $labelPrint->printLabel();
 
 // header('Location: ' . $_SERVER['HTTP_HOST']  . '/../showPDF.class.php?id=' . $objectid);
