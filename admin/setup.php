@@ -23,6 +23,9 @@
  * \brief   FicheMag setup page.
  */
 
+error_reporting(E_ALL);
+ini_set('display_errors',1);
+
 // Load Dolibarr environment
 $res = 0;
 // Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
@@ -198,7 +201,7 @@ $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 $moduledir = 'fichemag';
 $myTmpObjects = array();
 // TODO Scan list of objects to fill this array
-$myTmpObjects['myobject'] = array('label' => 'MyObject', 'includerefgeneration' => 0, 'includedocgeneration' => 0, 'class' => 'MyObject');
+$myTmpObjects['myobject'] = array('label' => 'MyObject', 'includerefgeneration' => 0, 'includedocgeneration' => 1, 'class' => 'MyObject');
 
 $tmpobjectkey = GETPOST('object', 'aZ09');
 if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
