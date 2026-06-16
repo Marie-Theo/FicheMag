@@ -121,7 +121,7 @@ class modFicheMag extends DolibarrModules
 			/* BEGIN MODULEBUILDER HOOKSCONTEXTS */
 			'hooks' => array(
 				'data' => array(
-					'productcard',
+					// 'productcard',
 				),
 				'entity' => '0',
 			),
