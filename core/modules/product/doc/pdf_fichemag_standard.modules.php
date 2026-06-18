@@ -180,14 +180,14 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				// Create pdf instance
 				$pdf = pdf_getInstance($this->format);
 				$default_font_size = pdf_getPDFFontSize($outputlangs); // Must be after pdf_getInstance
-				$pdf->setAutoPageBreak(true, 0);
+				$pdf->setAutoPageBreak(false, 0);
 
-				$heightforinfotot = 40; // Height reserved to output the info and total part
-				$heightforfreetext = getDolGlobalInt('MAIN_PDF_FREETEXT_HEIGHT', 5); // Height reserved to output the free text on last page
-				$heightforfooter = $this->marge_basse + 8; // Height reserved to output the footer (value include bottom margin)
-				if (getDolGlobalString('MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS')) {
-					$heightforfooter += 6;
-				}
+				$heightforinfotot = 0; // Height reserved to output the info and total part
+				$heightforfreetext = 0; // Height reserved to output the free text on last page
+				$heightforfooter = 0; // Height reserved to output the footer (value include bottom margin)
+				// if (getDolGlobalString('MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS')) {
+				// 	$heightforfooter += 6;
+				// }
 
 				if (class_exists('TCPDF')) {
 					$pdf->setPrintHeader(false);
@@ -215,7 +215,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 
 				// @phan-suppress-next-line PhanPluginSuspiciousParamOrder
 				$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
-
+				
 				// Tableau des caractéristique
 
 				$price_ttc = dol_textishtml($object->price_ttc) ? $object->price_ttc : dol_nl2br($object->price_ttc, 1, true);
@@ -296,10 +296,8 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$pdf->MultiCell(0, 3, ''); // Set interline to 3
 				$pdf->SetTextColor(0, 0, 0);
 
-
 				$tab_top = 42;
 				$tab_top_newpage = (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD') ? 42 : 10);
-
 				$posy = $pdf->GetY();
 	
 				$pdf->SetFont('', 'B', $default_font_size+5);
@@ -316,46 +314,29 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$posy += 2;
 				$this->_tableau($pdf, $posy, $this->page_hauteur - $tab_top_newpage - $heightforinfotot - $heightforfreetext - $heightforfooter, 0, $outputlangs, 1, 0, $description);
 				
-				$posy += 5;
-				
-				$contact = "<table border=0 cellspacing='10' cellpadding='10'>
-						<tr>
-							<td>
-								<u>CONTACT</u> - <u>HORAIRES</u>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								02.33.60.89.01  contact@misinformatique.com
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Fermé le Lundi matin, le dimanche et les jours fériés
-							</td>
-						</tr>
-					</table>";
-
-				$pdf->SetFont('', 'B', $default_font_size+5);
-				$pdf->setXY($this->marge_gauche * 2, $posy);
-				$pdf->MultiCell($this->page_largeur - $this->marge_gauche * 2 - $this->marge_droite * 2, 0, dol_htmlentitiesbr($contact), $border=1, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
-				$posy = $pdf->getStringHeight($pdf->GetStringWidth(dol_htmlentitiesbr($contact)), dol_htmlentitiesbr($contact));
-				print($posy); // max 223
-
+				$pdf->setDrawColor(255, 0 ,0);
 				$logo = $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
 				if (is_readable($logo)) {
-					$height = pdf_getHeightForLogo($logo);
-					$pdf->Image($logo, $this->marge_gauche, $posy, $height, 0, $fill=true); // width=0 (auto)
+					// récupéré la hauteur et la largeur de l'image
+					$height = pdf_getHeightForLogo($logo)-5;
+					$width = ($this->page_largeur - $this->marge_gauche - $this->marge_droite) / 2 - $this->marge_gauche*2 - $this->marge_droite*2 ;
+
+					$marge_code_barre = 10;
+					$posy= $this->page_hauteur - $this->marge_basse - $height - $marge_code_barre;
+					$t = $this->page_hauteur - $this->marge_basse - $height - $marge_code_barre * 2;
+					$b = $this->page_hauteur - $this->marge_basse;
+					$l = $this->marge_gauche * 2;
+					$r = $this->page_largeur - $this->marge_droite * 2;
+					$c = ($this->page_largeur / 2);
+					$longeur_pied_page= $this->page_largeur - $this->marge_droite * 2 - $this->marge_gauche * 2;
+/*bas*/				$pdf->line($l, $b, $r, $b); // line takes a position y in 2nd parameter and 4th parameter
+/*haut*/			$pdf->line($l, $t, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
+/*gauche*/			$pdf->line($l, $b, $l, $t); // line takes a position y in 2nd parameter and 4th parameter
+/*droite*/			$pdf->line($r, $b, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
+/*centre*/			$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
+
+					// générer l'image
+					$pdf->Image($logo, $longeur_pied_page/4 + $l - $width /2 , $posy, $width, $height); // width=0 (auto)
 				} else {
 					$pdf->SetTextColor(200, 0, 0);
 					$pdf->SetFont('', 'B', $default_font_size - 2);
@@ -363,308 +344,330 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
 				}
 
+				$pdf->setTextColor(0,0,0);
+				$pdf->setDrawColor(128,128,128);
+				$contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td><u>CONTACT</u> - <u>HORAIRES</u>
+						</td></tr><tr><td>02.33.60.89.01  contact@misinformatique.com
+						</td></tr><tr><td>Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30
+						</td></tr><tr><td>Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30
+						</td></tr><tr><td>Fermé le Lundi matin, le dimanche et les jours fériés</td></tr></table>";
+				$posy = $t - pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($contact));
+
+				$pdf->SetFont('', 'B', $default_font_size+5);
+				$pdf->setXY($this->marge_gauche * 2, $posy);
+				$pdf->MultiCell($this->page_largeur - $this->marge_gauche * 2 - $this->marge_droite * 2, 0, dol_htmlentitiesbr($contact), $border=1, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+
+				$pdf->setTextColor(255,0,0);
+				$html_price_ttc = "<h1>" . $price_ttc . "€&nbsp;ttc</h1>";
+
+				$pdf->SetFont('', 'B', $default_font_size+20);
+				$hauteur_price = pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($html_price_ttc));
+				$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
+				$pdf->MultiCell($longeur_pied_page / 2, 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+
 				// Show photo
 				/*
-				$tab_height = $this->page_hauteur - $tab_top - $heightforfooter - $heightforfreetext;
+					$tab_height = $this->page_hauteur - $tab_top - $heightforfooter - $heightforfreetext;
 
-				$pdir = array();
-				if (getDolGlobalInt('PRODUCT_USE_OLD_PATH_FOR_PHOTO')) {
-					$pdir[0] = get_exdir($object->id, 2, 0, 0, $object, 'product').$object->id."/photos/";
-					$pdir[1] = get_exdir(0, 0, 0, 0, $object, 'product').dol_sanitizeFileName($object->ref).'/';
-				} else {
-					$pdir[0] = get_exdir(0, 0, 0, 0, $object, 'product'); // default
-					$pdir[1] = get_exdir($object->id, 2, 0, 0, $object, 'product').$object->id."/photos/"; // alternative
-				}
+					$pdir = array();
+					if (getDolGlobalInt('PRODUCT_USE_OLD_PATH_FOR_PHOTO')) {
+						$pdir[0] = get_exdir($object->id, 2, 0, 0, $object, 'product').$object->id."/photos/";
+						$pdir[1] = get_exdir(0, 0, 0, 0, $object, 'product').dol_sanitizeFileName($object->ref).'/';
+					} else {
+						$pdir[0] = get_exdir(0, 0, 0, 0, $object, 'product'); // default
+						$pdir[1] = get_exdir($object->id, 2, 0, 0, $object, 'product').$object->id."/photos/"; // alternative
+					}
 
-				$arephoto = false;
-				foreach ($pdir as $midir) {
-					if (!$arephoto) {
-						if ($conf->entity != $object->entity) {
-							$dir = $conf->product->multidir_output[$object->entity].'/'.$midir; //Check repertories of current entities
-						} else {
-							$dir = $conf->product->dir_output.'/'.$midir; //Check repertory of the current product
-						}
-						foreach ($object->liste_photos($dir, 1) as $key => $obj) {
-							if (!getDolGlobalInt('CAT_HIGH_QUALITY_IMAGES')) {		// If CAT_HIGH_QUALITY_IMAGES not defined, we use thumb if defined and then original photo
-								if ($obj['photo_vignette']) {
-									$filename = $obj['photo_vignette'];
+					$arephoto = false;
+					foreach ($pdir as $midir) {
+						if (!$arephoto) {
+							if ($conf->entity != $object->entity) {
+								$dir = $conf->product->multidir_output[$object->entity].'/'.$midir; //Check repertories of current entities
+							} else {
+								$dir = $conf->product->dir_output.'/'.$midir; //Check repertory of the current product
+							}
+							foreach ($object->liste_photos($dir, 1) as $key => $obj) {
+								if (!getDolGlobalInt('CAT_HIGH_QUALITY_IMAGES')) {		// If CAT_HIGH_QUALITY_IMAGES not defined, we use thumb if defined and then original photo
+									if ($obj['photo_vignette']) {
+										$filename = $obj['photo_vignette'];
+									} else {
+										$filename = $obj['photo'];
+									}
 								} else {
 									$filename = $obj['photo'];
 								}
-							} else {
-								$filename = $obj['photo'];
+								$realpath = $dir.$filename;
+								$arephoto = true;
 							}
-							$realpath = $dir.$filename;
-							$arephoto = true;
 						}
 					}
-				}
-				// Define size of image if we need it
-				$imglinesize = array();
-				$nexyafterphoto = null;
-				if (!empty($realpath) && $arephoto) {
-					$imgsize = pdf_getSizeForImage($realpath);
-					$imgsizewidth = $imgsize['width'] + 20;
-					$imgsizeheight = $imgsize['height'] + 20;
+					// Define size of image if we need it
+					$imglinesize = array();
+					$nexyafterphoto = null;
+					if (!empty($realpath) && $arephoto) {
+						$imgsize = pdf_getSizeForImage($realpath);
+						$imgsizewidth = $imgsize['width'] + 20;
+						$imgsizeheight = $imgsize['height'] + 20;
 
-					$midelpage = ($this->page_largeur - $this->marge_gauche - $this->marge_droite) / 2;
-					$posxphoto = $midelpage + ($midelpage / 2) - ($imgsizewidth / 2);
-					$posyphoto = $tab_top - 1;
-					$pdf->Image($realpath, $posxphoto, $posyphoto, $imgsizewidth, $imgsizeheight, '', '', '', 2, 300); // Use 300 dpi
-					$nexyafterphoto = $tab_top + $imgsizeheight;
-				}
-				*/
-				
-				// Description
-				/*
-				$pdf->SetFont('', '', $default_font_size);
-				$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, dol_htmlentitiesbr($object->description), 0, 1);
-				$nexY = $pdf->GetY();
-
-				$nexY += 5;
-
-				$outputlangs->load("other");
-				if ($object->weight) {
-					$texttoshow = $langs->trans("Weight").': '.dol_htmlentitiesbr($object->weight);
-					if (isset($object->weight_units)) {
-						$texttoshow .= ' '.measuring_units_string($object->weight_units, 'weight', 0, 0, $outputlangs);
+						$midelpage = ($this->page_largeur - $this->marge_gauche - $this->marge_droite) / 2;
+						$posxphoto = $midelpage + ($midelpage / 2) - ($imgsizewidth / 2);
+						$posyphoto = $tab_top - 1;
+						$pdf->Image($realpath, $posxphoto, $posyphoto, $imgsizewidth, $imgsizeheight, '', '', '', 2, 300); // Use 300 dpi
+						$nexyafterphoto = $tab_top + $imgsizeheight;
 					}
-					$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
+					*/
+					
+					// Description
+					/*
+					$pdf->SetFont('', '', $default_font_size);
+					$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, dol_htmlentitiesbr($object->description), 0, 1);
 					$nexY = $pdf->GetY();
-				}
-				if ($object->length) {
-					$texttoshow = $langs->trans("Length") . ' x ' . $langs->trans("Width") . ' x ' . $langs->trans("Height") . ': ' . ($object->length != '' ? $object->length : '?') . ' x ' . ($object->width != '' ? $object->width : '?') . ' x ' . ($object->height != '' ? $object->height : '?');
-					$texttoshow .= ' ' . measuringUnitString(0, "size", $object->length_units);
-					$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
-					$nexY = $pdf->GetY();
-				}
-				if ($object->surface) {
-					$texttoshow = $langs->trans("Surface") . ': ' . dol_htmlentitiesbr($object->surface);
-					$texttoshow .= ' ' . measuringUnitString(0, "surface", $object->surface_units);
-					$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
-					$nexY = $pdf->GetY();
-				}
-				if ($object->volume) {
-					$texttoshow = $langs->trans("Volume") . ': ' . dol_htmlentitiesbr($object->volume);
-					$texttoshow .= ' ' . measuringUnitString(0, "volume", $object->volume_units);
-					$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
-					$nexY = $pdf->GetY();
-				}
 
-				$tab_top = 88;
-				if (!empty($nexyafterphoto) && $nexyafterphoto > $tab_top) {
-					$tab_top = $nexyafterphoto;
-				}
-				*/
+					$nexY += 5;
 
-				// Show notes
-				// TODO There is no public note on product yet
-				/*
-				$notetoshow = empty($object->note_public) ? '' : $object->note_public;
-				if ($notetoshow) {
-					$substitutionarray = pdf_getSubstitutionArray($outputlangs, null, $object);
-					complete_substitutions_array($substitutionarray, $outputlangs, $object);
-					$notetoshow = make_substitutions($notetoshow, $substitutionarray, $outputlangs);
-					$notetoshow = convertBackOfficeMediasLinksToPublicLinks($notetoshow);
+					$outputlangs->load("other");
+					if ($object->weight) {
+						$texttoshow = $langs->trans("Weight").': '.dol_htmlentitiesbr($object->weight);
+						if (isset($object->weight_units)) {
+							$texttoshow .= ' '.measuring_units_string($object->weight_units, 'weight', 0, 0, $outputlangs);
+						}
+						$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
+						$nexY = $pdf->GetY();
+					}
+					if ($object->length) {
+						$texttoshow = $langs->trans("Length") . ' x ' . $langs->trans("Width") . ' x ' . $langs->trans("Height") . ': ' . ($object->length != '' ? $object->length : '?') . ' x ' . ($object->width != '' ? $object->width : '?') . ' x ' . ($object->height != '' ? $object->height : '?');
+						$texttoshow .= ' ' . measuringUnitString(0, "size", $object->length_units);
+						$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
+						$nexY = $pdf->GetY();
+					}
+					if ($object->surface) {
+						$texttoshow = $langs->trans("Surface") . ': ' . dol_htmlentitiesbr($object->surface);
+						$texttoshow .= ' ' . measuringUnitString(0, "surface", $object->surface_units);
+						$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
+						$nexY = $pdf->GetY();
+					}
+					if ($object->volume) {
+						$texttoshow = $langs->trans("Volume") . ': ' . dol_htmlentitiesbr($object->volume);
+						$texttoshow .= ' ' . measuringUnitString(0, "volume", $object->volume_units);
+						$pdf->writeHTMLCell(190, 3, $this->marge_gauche, $nexY, $texttoshow, 0, 1);
+						$nexY = $pdf->GetY();
+					}
 
-					$pdf->SetFont('', '', $default_font_size - 1);
-					$pdf->writeHTMLCell(190, 3, $this->marge_gauche - 1, $tab_top, dol_htmlentitiesbr($notetoshow), 0, 1);
-					$nexY = $pdf->GetY();
-					$height_note = $nexY - $tab_top;
+					$tab_top = 88;
+					if (!empty($nexyafterphoto) && $nexyafterphoto > $tab_top) {
+						$tab_top = $nexyafterphoto;
+					}
+					*/
 
-					// Rect takes a length in 3rd parameter
-					$pdf->SetDrawColor(192, 192, 192);
-					$pdf->RoundedRect($this->marge_gauche, $tab_top - 1, $this->page_largeur - $this->marge_gauche - $this->marge_droite, $height_note + 2, $this->corner_radius, '1234', 'D');
+					// Show notes
+					// TODO There is no public note on product yet
+					/*
+					$notetoshow = empty($object->note_public) ? '' : $object->note_public;
+					if ($notetoshow) {
+						$substitutionarray = pdf_getSubstitutionArray($outputlangs, null, $object);
+						complete_substitutions_array($substitutionarray, $outputlangs, $object);
+						$notetoshow = make_substitutions($notetoshow, $substitutionarray, $outputlangs);
+						$notetoshow = convertBackOfficeMediasLinksToPublicLinks($notetoshow);
 
-					$tab_height -= $height_note;
-					$tab_top = $nexY + 6;
-				} else {
-					$height_note = 0;
-				}
+						$pdf->SetFont('', '', $default_font_size - 1);
+						$pdf->writeHTMLCell(190, 3, $this->marge_gauche - 1, $tab_top, dol_htmlentitiesbr($notetoshow), 0, 1);
+						$nexY = $pdf->GetY();
+						$height_note = $nexY - $tab_top;
 
-				$iniY = $tab_top + 7;
-				$curY = $tab_top + 7;
-				$nexY = $tab_top + 7;
-				*/
+						// Rect takes a length in 3rd parameter
+						$pdf->SetDrawColor(192, 192, 192);
+						$pdf->RoundedRect($this->marge_gauche, $tab_top - 1, $this->page_largeur - $this->marge_gauche - $this->marge_droite, $height_note + 2, $this->corner_radius, '1234', 'D');
 
-				// Loop on each lines
+						$tab_height -= $height_note;
+						$tab_top = $nexY + 6;
+					} else {
+						$height_note = 0;
+					}
 
-				/*
-				for ($i = 0 ; $i < $nblines ; $i++)
-				{
-					$curY = $nexY;
-					$pdf->SetFont('','', $default_font_size - 1);   // Into loop to work with multipage
-					$pdf->SetTextColor(0,0,0);
+					$iniY = $tab_top + 7;
+					$curY = $tab_top + 7;
+					$nexY = $tab_top + 7;
+					*/
 
-					$pdf->setTopMargin($tab_top_newpage);
-					$pdf->setPageOrientation('', 1, $heightforfooter+$heightforfreetext+$heightforinfotot);	// The only function to edit the bottom margin of current page to set it.
-					$pageposbefore=$pdf->getPage();
+					// Loop on each lines
 
-					// Description of product line
-					$curX = $this->posxdesc-1;
-
-					$showpricebeforepagebreak=1;
-
-					$pdf->startTransaction();
-					pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxtva-$curX,3,$curX,$curY,$hideref,$hidedesc);
-					$pageposafter=$pdf->getPage();
-					if ($pageposafter > $pageposbefore)	// There is a pagebreak
+					/*
+					for ($i = 0 ; $i < $nblines ; $i++)
 					{
-						$pdf->rollbackTransaction(true);
-						$pageposafter=$pageposbefore;
-						//print $pageposafter.'-'.$pageposbefore;exit;
-						$pdf->setPageOrientation('', 1, $heightforfooter);	// The only function to edit the bottom margin of current page to set it.
-						pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxtva-$curX,4,$curX,$curY,$hideref,$hidedesc);
+						$curY = $nexY;
+						$pdf->SetFont('','', $default_font_size - 1);   // Into loop to work with multipage
+						$pdf->SetTextColor(0,0,0);
+
+						$pdf->setTopMargin($tab_top_newpage);
+						$pdf->setPageOrientation('', 1, $heightforfooter+$heightforfreetext+$heightforinfotot);	// The only function to edit the bottom margin of current page to set it.
+						$pageposbefore=$pdf->getPage();
+
+						// Description of product line
+						$curX = $this->posxdesc-1;
+
+						$showpricebeforepagebreak=1;
+
+						$pdf->startTransaction();
+						pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxtva-$curX,3,$curX,$curY,$hideref,$hidedesc);
 						$pageposafter=$pdf->getPage();
-						$posyafter=$pdf->GetY();
-						if ($posyafter > ($this->page_hauteur - ($heightforfooter+$heightforfreetext+$heightforinfotot)))	// There is no space left for total+free text
+						if ($pageposafter > $pageposbefore)	// There is a pagebreak
 						{
-							if ($i == ($nblines-1))	// No more lines, and no space left to show total, so we create a new page
+							$pdf->rollbackTransaction(true);
+							$pageposafter=$pageposbefore;
+							//print $pageposafter.'-'.$pageposbefore;exit;
+							$pdf->setPageOrientation('', 1, $heightforfooter);	// The only function to edit the bottom margin of current page to set it.
+							pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxtva-$curX,4,$curX,$curY,$hideref,$hidedesc);
+							$pageposafter=$pdf->getPage();
+							$posyafter=$pdf->GetY();
+							if ($posyafter > ($this->page_hauteur - ($heightforfooter+$heightforfreetext+$heightforinfotot)))	// There is no space left for total+free text
 							{
-								$pdf->AddPage('','',true);
-								if (!empty($tplidx)) $pdf->useTemplate($tplidx);
-								if (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD')) $this->_pagehead($pdf, $object, 0, $outputlangs);
-								$pdf->setPage($pageposafter+1);
+								if ($i == ($nblines-1))	// No more lines, and no space left to show total, so we create a new page
+								{
+									$pdf->AddPage('','',true);
+									if (!empty($tplidx)) $pdf->useTemplate($tplidx);
+									if (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD')) $this->_pagehead($pdf, $object, 0, $outputlangs);
+									$pdf->setPage($pageposafter+1);
+								}
+							}
+							else
+							{
+								// We found a page break
+								$showpricebeforepagebreak=0;
 							}
 						}
-						else
+						else	// No pagebreak
 						{
-							// We found a page break
-							$showpricebeforepagebreak=0;
+							$pdf->commitTransaction();
 						}
-					}
-					else	// No pagebreak
-					{
-						$pdf->commitTransaction();
-					}
 
-					$nexY = $pdf->GetY();
-					$pageposafter=$pdf->getPage();
-					$pdf->setPage($pageposbefore);
-					$pdf->setTopMargin($this->marge_haute);
-					$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
-
-					// We suppose that a too long description is moved completely on next page
-					if ($pageposafter > $pageposbefore && empty($showpricebeforepagebreak)) {
-						$pdf->setPage($pageposafter); $curY = $tab_top_newpage;
-					}
-
-					$pdf->SetFont('','',  $default_font_size - 1);   // On repositionne la police par default
-
-
-
-					$pdf->SetXY($this->posxtva, $curY);
-					$pdf->MultiCell($this->posxup-$this->posxtva-0.8, 3, $vat_rate, 0, 'R');
-
-
-
-
-					// Collecte des totaux par valeur de tva dans $this->tva["taux"]=total_tva
-					if (isModEnabled("multicurrency") && $object->multicurrency_tx != 1) $tvaligne=$object->lines[$i]->multicurrency_total_tva;
-					else $tvaligne=$object->lines[$i]->total_tva;
-
-					$localtax1ligne=$object->lines[$i]->total_localtax1;
-					$localtax2ligne=$object->lines[$i]->total_localtax2;
-					$localtax1_rate=$object->lines[$i]->localtax1_tx;
-					$localtax2_rate=$object->lines[$i]->localtax2_tx;
-					$localtax1_type=$object->lines[$i]->localtax1_type;
-					$localtax2_type=$object->lines[$i]->localtax2_type;
-
-					if ($object->remise_percent) $tvaligne-=($tvaligne*$object->remise_percent)/100;
-					if ($object->remise_percent) $localtax1ligne-=($localtax1ligne*$object->remise_percent)/100;
-					if ($object->remise_percent) $localtax2ligne-=($localtax2ligne*$object->remise_percent)/100;
-
-					$vatrate=(string) $object->lines[$i]->tva_tx;
-
-					// Retrieve type from database for backward compatibility with old records
-					if ((! isset($localtax1_type) || $localtax1_type=='' || ! isset($localtax2_type) || $localtax2_type=='') // if tax type not defined
-					&& (!empty($localtax1_rate) || !empty($localtax2_rate))) // and there is local tax
-					{
-						$localtaxtmp_array=getLocalTaxesFromRate($vatrate,0,$object->thirdparty,$mysoc);
-						$localtax1_type = isset($localtaxtmp_array[0]) ? $localtaxtmp_array[0] : '';
-						$localtax2_type = isset($localtaxtmp_array[2]) ? $localtaxtmp_array[2] : '';
-					}
-
-					// retrieve global local tax
-					if ($localtax1_type && $localtax1ligne != 0) {
-						if (empty($this->localtax1[$localtax1_type][$localtax1_rate])) {
-							$this->localtax1[$localtax1_type][$localtax1_rate] = $localtax1ligne;
-						} else {
-							$this->localtax1[$localtax1_type][$localtax1_rate] += $localtax1ligne;
-						}
-					}
-					if ($localtax2_type && $localtax2ligne != 0) {
-						if (empty($this->localtax2[$localtax2_type][$localtax2_rate])) {
-							$this->localtax2[$localtax2_type][$localtax2_rate] = $localtax2ligne;
-						} else {
-							$this->localtax2[$localtax2_type][$localtax2_rate] += $localtax2ligne;
-						}
-					}
-
-					if (($object->lines[$i]->info_bits & 0x01) == 0x01) $vatrate.='*';
-					if (! isset($this->tva[$vatrate])) 				$this->tva[$vatrate]=0;
-					$this->tva[$vatrate] += $tvaligne;
-
-					// Add line
-					if (getDolGlobalString('MAIN_PDF_DASH_BETWEEN_LINES') && $i < ($nblines - 1))
-					{
-						$pdf->setPage($pageposafter);
-						$pdf->SetLineStyle(array('dash'=>'1,1','color'=>array(80,80,80)));
-						//$pdf->SetDrawColor(190,190,200);
-						$pdf->line($this->marge_gauche, $nexY+1, $this->page_largeur - $this->marge_droite, $nexY+1);
-						$pdf->SetLineStyle(array('dash'=>0));
-					}
-
-					$nexY+=2;    // Add space between lines
-
-					// Detect if some page were added automatically and output _tableau for past pages
-					while ($pagenb < $pageposafter)
-					{
-						$pdf->setPage($pagenb);
-						if ($pagenb == 1)
-						{
-							$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1, $object->multicurrency_code);
-						}
-						else
-						{
-							$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1, $object->multicurrency_code);
-						}
-						$this->_pagefoot($pdf,$object,$outputlangs,1);
-						$pagenb++;
-						$pdf->setPage($pagenb);
+						$nexY = $pdf->GetY();
+						$pageposafter=$pdf->getPage();
+						$pdf->setPage($pageposbefore);
+						$pdf->setTopMargin($this->marge_haute);
 						$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
-						if (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD')) $this->_pagehead($pdf, $object, 0, $outputlangs);
-					}
-					if (isset($object->lines[$i+1]->pagebreak) && $object->lines[$i+1]->pagebreak)
-					{
-						if ($pagenb == 1)
-						{
-							$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1, $object->multicurrency_code);
-						}
-						else
-						{
-							$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1, $object->multicurrency_code);
-						}
-						$this->_pagefoot($pdf,$object,$outputlangs,1);
-						// New page
-						$pdf->AddPage();
-						if (!empty($tplidx)) $pdf->useTemplate($tplidx);
-						$pagenb++;
-						if (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD')) $this->_pagehead($pdf, $object, 0, $outputlangs);
-					}
-				}
 
-				// Show square
-				if ($pagenb == 1)
-				{
-					$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforinfotot - $heightforfreetext - $heightforfooter, 0, $outputlangs, 0, 0, $object->multicurrency_code);
-					$bottomlasttab=$this->page_hauteur - $heightforinfotot - $heightforfreetext - $heightforfooter + 1;
-				}
-				else
-				{
-					$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforinfotot - $heightforfreetext - $heightforfooter, 0, $outputlangs, 1, 0, $object->multicurrency_code);
-					$bottomlasttab=$this->page_hauteur - $heightforinfotot - $heightforfreetext - $heightforfooter + 1;
-				}*/
+						// We suppose that a too long description is moved completely on next page
+						if ($pageposafter > $pageposbefore && empty($showpricebeforepagebreak)) {
+							$pdf->setPage($pageposafter); $curY = $tab_top_newpage;
+						}
+
+						$pdf->SetFont('','',  $default_font_size - 1);   // On repositionne la police par default
+
+
+
+						$pdf->SetXY($this->posxtva, $curY);
+						$pdf->MultiCell($this->posxup-$this->posxtva-0.8, 3, $vat_rate, 0, 'R');
+
+
+
+
+						// Collecte des totaux par valeur de tva dans $this->tva["taux"]=total_tva
+						if (isModEnabled("multicurrency") && $object->multicurrency_tx != 1) $tvaligne=$object->lines[$i]->multicurrency_total_tva;
+						else $tvaligne=$object->lines[$i]->total_tva;
+
+						$localtax1ligne=$object->lines[$i]->total_localtax1;
+						$localtax2ligne=$object->lines[$i]->total_localtax2;
+						$localtax1_rate=$object->lines[$i]->localtax1_tx;
+						$localtax2_rate=$object->lines[$i]->localtax2_tx;
+						$localtax1_type=$object->lines[$i]->localtax1_type;
+						$localtax2_type=$object->lines[$i]->localtax2_type;
+
+						if ($object->remise_percent) $tvaligne-=($tvaligne*$object->remise_percent)/100;
+						if ($object->remise_percent) $localtax1ligne-=($localtax1ligne*$object->remise_percent)/100;
+						if ($object->remise_percent) $localtax2ligne-=($localtax2ligne*$object->remise_percent)/100;
+
+						$vatrate=(string) $object->lines[$i]->tva_tx;
+
+						// Retrieve type from database for backward compatibility with old records
+						if ((! isset($localtax1_type) || $localtax1_type=='' || ! isset($localtax2_type) || $localtax2_type=='') // if tax type not defined
+						&& (!empty($localtax1_rate) || !empty($localtax2_rate))) // and there is local tax
+						{
+							$localtaxtmp_array=getLocalTaxesFromRate($vatrate,0,$object->thirdparty,$mysoc);
+							$localtax1_type = isset($localtaxtmp_array[0]) ? $localtaxtmp_array[0] : '';
+							$localtax2_type = isset($localtaxtmp_array[2]) ? $localtaxtmp_array[2] : '';
+						}
+
+						// retrieve global local tax
+						if ($localtax1_type && $localtax1ligne != 0) {
+							if (empty($this->localtax1[$localtax1_type][$localtax1_rate])) {
+								$this->localtax1[$localtax1_type][$localtax1_rate] = $localtax1ligne;
+							} else {
+								$this->localtax1[$localtax1_type][$localtax1_rate] += $localtax1ligne;
+							}
+						}
+						if ($localtax2_type && $localtax2ligne != 0) {
+							if (empty($this->localtax2[$localtax2_type][$localtax2_rate])) {
+								$this->localtax2[$localtax2_type][$localtax2_rate] = $localtax2ligne;
+							} else {
+								$this->localtax2[$localtax2_type][$localtax2_rate] += $localtax2ligne;
+							}
+						}
+
+						if (($object->lines[$i]->info_bits & 0x01) == 0x01) $vatrate.='*';
+						if (! isset($this->tva[$vatrate])) 				$this->tva[$vatrate]=0;
+						$this->tva[$vatrate] += $tvaligne;
+
+						// Add line
+						if (getDolGlobalString('MAIN_PDF_DASH_BETWEEN_LINES') && $i < ($nblines - 1))
+						{
+							$pdf->setPage($pageposafter);
+							$pdf->SetLineStyle(array('dash'=>'1,1','color'=>array(80,80,80)));
+							//$pdf->SetDrawColor(190,190,200);
+							$pdf->line($this->marge_gauche, $nexY+1, $this->page_largeur - $this->marge_droite, $nexY+1);
+							$pdf->SetLineStyle(array('dash'=>0));
+						}
+
+						$nexY+=2;    // Add space between lines
+
+						// Detect if some page were added automatically and output _tableau for past pages
+						while ($pagenb < $pageposafter)
+						{
+							$pdf->setPage($pagenb);
+							if ($pagenb == 1)
+							{
+								$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1, $object->multicurrency_code);
+							}
+							else
+							{
+								$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1, $object->multicurrency_code);
+							}
+							$this->_pagefoot($pdf,$object,$outputlangs,1);
+							$pagenb++;
+							$pdf->setPage($pagenb);
+							$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
+							if (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD')) $this->_pagehead($pdf, $object, 0, $outputlangs);
+						}
+						if (isset($object->lines[$i+1]->pagebreak) && $object->lines[$i+1]->pagebreak)
+						{
+							if ($pagenb == 1)
+							{
+								$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1, $object->multicurrency_code);
+							}
+							else
+							{
+								$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1, $object->multicurrency_code);
+							}
+							$this->_pagefoot($pdf,$object,$outputlangs,1);
+							// New page
+							$pdf->AddPage();
+							if (!empty($tplidx)) $pdf->useTemplate($tplidx);
+							$pagenb++;
+							if (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD')) $this->_pagehead($pdf, $object, 0, $outputlangs);
+						}
+					}
+
+					// Show square
+					if ($pagenb == 1)
+					{
+						$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforinfotot - $heightforfreetext - $heightforfooter, 0, $outputlangs, 0, 0, $object->multicurrency_code);
+						$bottomlasttab=$this->page_hauteur - $heightforinfotot - $heightforfreetext - $heightforfooter + 1;
+					}
+					else
+					{
+						$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforinfotot - $heightforfreetext - $heightforfooter, 0, $outputlangs, 1, 0, $object->multicurrency_code);
+						$bottomlasttab=$this->page_hauteur - $heightforinfotot - $heightforfreetext - $heightforfooter + 1;
+					}
+				*/
 				
 
 				// Affiche zone infos
@@ -672,10 +675,10 @@ class pdf_fichemag_standard extends ModelePDFProduct
 
 				// Pied de page
 				/*
-				$this->_pagefoot($pdf, $object, $outputlangs);
-				if (method_exists($pdf, 'AliasNbPages')) {
-					$pdf->AliasNbPages();  // @phan-suppress-current-line PhanUndeclaredMethod
-				}
+					$this->_pagefoot($pdf, $object, $outputlangs);
+					if (method_exists($pdf, 'AliasNbPages')) {
+						$pdf->AliasNbPages();  // @phan-suppress-current-line PhanUndeclaredMethod
+					}
 				*/
 
 				$pdf->Close();
