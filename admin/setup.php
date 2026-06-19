@@ -59,6 +59,7 @@ if (!$res) {
 require_once DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php";
 require_once '../lib/fichemag.lib.php';
 //require_once "../class/myclass.class.php";
+require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
 /**
  * @var Conf $conf
@@ -78,12 +79,11 @@ $hookmanager->initHooks(array('fichemagsetup', 'globalsetup'));
 // Parameters
 $action = GETPOST('action', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
-$modulepart = GETPOST('modulepart', 'aZ09');	// Used by actions_setmoduleoptions.inc.php
 
 $value = GETPOST('value', 'alpha');
 $label = GETPOST('label', 'alpha');
 $scandir = GETPOST('scan_dir', 'alpha');
-$type = 'myobject';
+$type = 'product';
 
 $error = 0;
 $setupnotempty = 0;
@@ -198,13 +198,7 @@ $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 $moduledir = 'fichemag';
 $myTmpObjects = array();
 // TODO Scan list of objects to fill this array
-$myTmpObjects['myobject'] = array('label' => 'MyObject', 'includerefgeneration' => 0, 'includedocgeneration' => 0, 'class' => 'MyObject');
-
-$tmpobjectkey = GETPOST('object', 'aZ09');
-if ($tmpobjectkey && !array_key_exists($tmpobjectkey, $myTmpObjects)) {
-	accessforbidden('Bad value for object. Hack attempt ?');
-}
-
+$myTmpObjects['fichemag'] = array('label' => 'MyObject', 'includerefgeneration' => 0, 'includedocgeneration' => 1, 'class' => 'MyObject');
 
 /*
  * Actions
@@ -233,22 +227,20 @@ if ($action == 'updateMask') {
 	} else {
 		setEventMessages($langs->trans("Error"), null, 'errors');
 	}
-} elseif ($action == 'specimen' && $tmpobjectkey) {
+} elseif ($action == 'specimen') {
 	$modele = GETPOST('module', 'alpha');
 
-	$className = $myTmpObjects[$tmpobjectkey]['class'];
-	$tmpobject = new $className($db);
-	'@phan-var-force MyObject $tmpobject';
-	$tmpobject->initAsSpecimen();
+	$product = new Product($db);
+	$product->initAsSpecimen();
 
 	// Search template files
 	$file = '';
 	$className = '';
 	$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 	foreach ($dirmodels as $reldir) {
-		$file = dol_buildpath($reldir."core/modules/fichemag/doc/pdf_".$modele."_".strtolower($tmpobjectkey).".modules.php", 0);
+		$file = dol_buildpath($reldir."core/modules/fichemag/doc/pdf_".$modele.".modules.php", 0);
 		if (file_exists($file)) {
-			$className = "pdf_".$modele."_".strtolower($tmpobjectkey);
+			$className = "pdf_".$modele;
 			break;
 		}
 	}
@@ -257,12 +249,11 @@ if ($action == 'updateMask') {
 		require_once $file;
 
 		$module = new $className($db);
-		'@phan-var-force ModelePDFMyObject $module';
 
 		'@phan-var-force ModelePDFMyObject $module';
 
-		if ($module->write_file($tmpobject, $langs) > 0) {
-			header("Location: ".DOL_URL_ROOT."/document.php?modulepart=fichemag-".strtolower($tmpobjectkey)."&file=SPECIMEN.pdf");
+		if ($module->write_file($product, $langs, '') > 0) {
+			header("Location: ".DOL_URL_ROOT."/document.php?modulepart=fichemag&file=SPECIMEN.pdf");
 			return;
 		} else {
 			setEventMessages($module->error, null, 'errors');
@@ -375,10 +366,9 @@ foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 		print '</tr>'."\n";
 
 		clearstatcache();
-
 		foreach ($dirmodels as $reldir) {
 			$dir = dol_buildpath($reldir."core/modules/".$moduledir);
-
+			
 			if (is_dir($dir)) {
 				$handle = opendir($dir);
 				if (is_resource($handle)) {
@@ -426,7 +416,7 @@ foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 								if ($activenumberingmodel == $file) {
 									print img_picto($langs->trans("Activated"), 'switch_on');
 								} else {
-									print '<a href="'.$_SERVER["PHP_SELF"].'?action=setmod&token='.newToken().'&object='.strtolower($myTmpObjectKey).'&value='.urlencode($file).'">';
+									print '<a href="'.$_SERVER["PHP_SELF"].'?action=setmod&token='.newToken().'&value='.urlencode($file).'">';
 									print img_picto($langs->trans("Disabled"), 'switch_off');
 									print '</a>';
 								}
@@ -572,9 +562,9 @@ foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 										if (getDolGlobalString($constforvar) == $name) {
 											//print img_picto($langs->trans("Default"), 'on');
 											// Even if choice is the default value, we allow to disable it. Replace this with previous line if you need to disable unset
-											print '<a href="'.$_SERVER["PHP_SELF"].'?action=unsetdoc&token='.newToken().'&object='.urlencode(strtolower($myTmpObjectKey)).'&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'&amp;type='.urlencode($type).'" alt="'.$langs->trans("Disable").'">'.img_picto($langs->trans("Enabled"), 'on').'</a>';
+											print '<a href="'.$_SERVER["PHP_SELF"].'?action=unsetdoc&token='.newToken().'&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'&amp;type='.urlencode($type).'" alt="'.$langs->trans("Disable").'">'.img_picto($langs->trans("Enabled"), 'on').'</a>';
 										} else {
-											print '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&token='.newToken().'&object='.urlencode(strtolower($myTmpObjectKey)).'&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'" alt="'.$langs->trans("Default").'">'.img_picto($langs->trans("Disabled"), 'off').'</a>';
+											print '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&token='.newToken().'&&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'" alt="'.$langs->trans("Default").'">'.img_picto($langs->trans("Disabled"), 'off').'</a>';
 										}
 										print '</td>';
 
