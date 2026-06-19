@@ -27,6 +27,9 @@
  *	\brief      File of class to build PDF documents for products/services
  */
 
+// error_reporting(E_ALL);
+// ini_set('display_errors',1);
+
 require_once DOL_DOCUMENT_ROOT.'/core/modules/product/modules_product.class.php';
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
@@ -185,13 +188,6 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$default_font_size = pdf_getPDFFontSize($outputlangs); // Must be after pdf_getInstance
 				$pdf->setAutoPageBreak(false, 0);
 
-				$heightforinfotot = 0; // Height reserved to output the info and total part
-				$heightforfreetext = 0; // Height reserved to output the free text on last page
-				$heightforfooter = 0; // Height reserved to output the footer (value include bottom margin)
-				// if (getDolGlobalString('MAIN_GENERATE_DOCUMENTS_SHOW_FOOT_DETAILS')) {
-				// 	$heightforfooter += 6;
-				// }
-
 				if (class_exists('TCPDF')) {
 					$pdf->setPrintHeader(false);
 					$pdf->setPrintFooter(false);
@@ -219,89 +215,55 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				// @phan-suppress-next-line PhanPluginSuspiciousParamOrder
 				$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
 				
-				// Tableau des caractéristique
-
+				// récupération des données
 
 				$extrafields = new ExtraFields($db);
 				$extralabels=$extrafields->fetch_name_optionals_label($object->table_element);
 
-				var_dump($extralabels);
-				var_dump($object->array_options);
 				$description = array();
 				foreach($extralabels as $key => $value){
-					if (str_contains($key, 'fichemag_')){
-						$description[str_replace('fichemag_', '', $key)] = $object->array_options['options_' . $key];
+					if (str_contains($key, 'fichemag_') && $key != 'fichemag_marque' && isset($object->array_options['options_' . $key])){
+						$description[$value] = $object->array_options['options_' . $key];
 					}
 				}
-				var_dump($description);
-
+				$object->marque = $object->array_options["options_fichemag_marque"];
 				$price_ttc = dol_textishtml($object->price_ttc) ? $object->price_ttc : dol_nl2br($object->price_ttc, 1, true);
 				$price_ttc = price($price_ttc);
-				$barcode = dol_textishtml($object->barcode) ? $object->barcode : dol_nl2br($object->barcode, 1, true);
-				$descriptionTemp = dol_textishtml($object->description) ? $object->description : dol_nl2br($object->description, 1, true);
-				// retiré les espaces indésirable
-				$descriptionTemp = preg_split('<br>', $descriptionTemp);
-				$descriptionTemp = str_replace('/', '', $descriptionTemp);
-				$descriptionTemp = str_replace('<', '', $descriptionTemp);
-				$descriptionTemp = str_replace('>', '', $descriptionTemp);
-				$descriptionTemp = str_replace(' : ', ':', $descriptionTemp);
-				$descriptionTemp = str_replace('  ', ' ', $descriptionTemp);
-				$descriptionTemp = str_replace('
-', '', $descriptionTemp);
+				$barcode = (int) $object->barcode ? (dol_textishtml($object->barcode) ? $object->barcode : dol_nl2br($object->barcode, 1, true)) : false;
 
-				foreach($descriptionTemp as $caracteristique){
-					if (substr($caracteristique, 0, 1) == " "){ // retiré les espaces indésirable en début de string
-						$caracteristique = substr($caracteristique, 1);
-					}
-					if (str_contains($caracteristique, ':')){
-						$temp = explode(':', $caracteristique);
-						if (str_contains(strtolower($caracteristique), 'marque')){
-							$object->marque=$temp[1];
-						} else {
-							if (str_contains(strtolower($temp[0]), 'accessoire')){$accessoire=true;}
-							$description["$temp[0]"] = $temp[1];
+				if ($barcode){
+					// création du code bar
+					$code = $barcode;
+					$generator = 'tcpdfbarcode';  // Can be 'tcpdfbarcode', 'phpbarcode', a value provided by an external module, ...
+					$encoding = 'EAN13';  // Can be 'QRCODE', 'EAN13', ...
+					
+					$dirbarcode = array_merge(array("/core/modules/barcode/doc/"), $conf->modules_parts['barcode']);
+
+					$result = 0;
+					foreach ($dirbarcode as $reldir) {
+						$dir = dol_buildpath($reldir, 0);
+						$newdir = dol_osencode($dir);
+
+						// Check if directory exists (we do not use dol_is_dir to avoid loading files.lib.php)
+						if (!is_dir($newdir)) {
+							continue;
+						}
+
+						$result = @include_once $newdir.$generator.'.modules.php';
+						if ($result) {
+							break;
 						}
 					}
-					if (str_contains(strtolower($caracteristique), 'sacoche') && $accessoire==false){
-						$description["Accessoire"] = isset($description["Accessoire"]) ? $description["Accessoire"] . '/ Sacoche ' : 'Sacoche ';
-					} if (str_contains(strtolower($caracteristique), 'clavier') && $accessoire==false){
-						$description["Accessoire"] = isset($description["Accessoire"]) ? $description["Accessoire"] . '/ Clavier ' : 'Clavier ';
-					} if (str_contains(strtolower($caracteristique), 'souris') && $accessoire==false){
-						$description["Accessoire"] = isset($description["Accessoire"]) ? $description["Accessoire"] . '/ Souris ' : 'Souris ';
-					}
-				}
 
-				$code = $barcode;
-				$generator = 'tcpdfbarcode';  // Can be 'tcpdfbarcode', 'phpbarcode', a value provided by an external module, ...
-				$encoding = 'EAN13';  // Can be 'QRCODE', 'EAN13', ...
+					// Load barcode class
+					$classname = "mod".ucfirst($generator);
+					$module = new $classname($db);
+					if ($module->encodingIsSupported($encoding)) {
+						$result = $module->writeBarCode($code, $encoding, $readable);
+					}
+					// image is into file $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
+				}
 				
-				$dirbarcode = array_merge(array("/core/modules/barcode/doc/"), $conf->modules_parts['barcode']);
-
-				$result = 0;
-				foreach ($dirbarcode as $reldir) {
-					$dir = dol_buildpath($reldir, 0);
-					$newdir = dol_osencode($dir);
-
-					// Check if directory exists (we do not use dol_is_dir to avoid loading files.lib.php)
-					if (!is_dir($newdir)) {
-						continue;
-					}
-
-					$result = @include_once $newdir.$generator.'.modules.php';
-					if ($result) {
-						break;
-					}
-				}
-
-				// Load barcode class
-				$classname = "mod".ucfirst($generator);
-				$module = new $classname($db);
-				if ($module->encodingIsSupported($encoding)) {
-					$result = $module->writeBarCode($code, $encoding, $readable);
-				}
-				// image is into file $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
-
-
 				// New page
 				$pdf->AddPage();
 				if (!empty($tplidx)) {
@@ -317,50 +279,67 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$tab_top_newpage = (!getDolGlobalInt('MAIN_PDF_DONOTREPEAT_HEAD') ? 42 : 10);
 				$posy = $pdf->GetY();
 	
-				$pdf->SetFont('', 'B', $default_font_size+5);
+				$pdf->SetFont('', 'B', $default_font_size+10);
 
-				$pdf->setXY($this->marge_gauche, $posy-12);
+				$pdf->setXY($this->marge_gauche, $posy-13);
 				$pdf->MultiCell($this->page_largeur - $this->marge_gauche - $this->marge_droite, 0, dol_htmlentitiesbr('<center><u>'.$object->label.'</u></center>'), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 
 
 				$pdf->SetFont('','', $default_font_size - 1);   // Into loop to work with multipage
 				$pdf->SetTextColor(0,0,0);
 
-				$pdf->setPageOrientation('', 1, $heightforfooter+$heightforfreetext+$heightforinfotot);	// The only function to edit the bottom margin of current page to set it.
+				$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
 
 				$posy += 2;
-				$this->_tableau($pdf, $posy, $this->page_hauteur - $tab_top_newpage - $heightforinfotot - $heightforfreetext - $heightforfooter, 0, $outputlangs, 1, 0, $description);
+				$this->_tableau($pdf, $posy, $this->page_hauteur - $tab_top_newpage, 0, $outputlangs, 1, 0, $description);
 				
+				// Code Barre + Prix
 				$pdf->setDrawColor(255, 0 ,0);
-				$logo = $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
-				if (is_readable($logo)) {
-					// récupéré la hauteur et la largeur de l'image
-					$height = pdf_getHeightForLogo($logo)-5;
-					$width = ($this->page_largeur - $this->marge_gauche - $this->marge_droite) / 2 - $this->marge_gauche*2 - $this->marge_droite*2 ;
+				$html_price_ttc = "<h1>" . $price_ttc . "€&nbsp;ttc</h1>";
+				$padding_pied_page = 10;
 
-					$marge_code_barre = 10;
-					$posy= $this->page_hauteur - $this->marge_basse - $height - $marge_code_barre;
-					$t = $this->page_hauteur - $this->marge_basse - $height - $marge_code_barre * 2;
-					$b = $this->page_hauteur - $this->marge_basse;
-					$l = $this->marge_gauche * 2;
-					$r = $this->page_largeur - $this->marge_droite * 2;
-					$c = ($this->page_largeur / 2);
-					$longeur_pied_page= $this->page_largeur - $this->marge_droite * 2 - $this->marge_gauche * 2;
-/*bas*/				$pdf->line($l, $b, $r, $b); // line takes a position y in 2nd parameter and 4th parameter
-/*haut*/			$pdf->line($l, $t, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
-/*gauche*/			$pdf->line($l, $b, $l, $t); // line takes a position y in 2nd parameter and 4th parameter
-/*droite*/			$pdf->line($r, $b, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
-/*centre*/			$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
+				if ($barcode){
+					$logo = $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
+					if (is_readable($logo)) {
+						// récupéré la hauteur et la largeur de l'image
+						$height = pdf_getHeightForLogo($logo)-5;
+						$width = ($this->page_largeur - $this->marge_gauche - $this->marge_droite) / 2 - $this->marge_gauche*2 - $this->marge_droite*2 ;
 
-					// générer l'image
-					$pdf->Image($logo, $longeur_pied_page/4 + $l - $width /2 , $posy, $width, $height); // width=0 (auto)
+						$posy= $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page;
+						$t = $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page * 2;
+						$b = $this->page_hauteur - $this->marge_basse;
+						$l = $this->marge_gauche * 2;
+						$r = $this->page_largeur - $this->marge_droite * 2;
+						$c = ($this->page_largeur / 2);
+						$longeur_pied_page= $r - $l;
+						$pdf->line($l, $b, $r, $b); // line takes a position y in 2nd parameter and 4th parameter
+						$pdf->line($l, $t, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
+						$pdf->line($l, $b, $l, $t); // line takes a position y in 2nd parameter and 4th parameter
+						$pdf->line($r, $b, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
+						$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
+
+						// générer l'image
+						$pdf->Image($logo, $longeur_pied_page/4 + $l - $width /2 , $posy, $width, $height); // width=0 (auto)
+					} else {
+						$pdf->SetTextColor(200, 0, 0);
+						$pdf->SetFont('', 'B', $default_font_size - 2);
+						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound", $logo), 0, 'L');
+						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
+					}
 				} else {
-					$pdf->SetTextColor(200, 0, 0);
-					$pdf->SetFont('', 'B', $default_font_size - 2);
-					$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound", $logo), 0, 'L');
-					$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
+					$height = pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($html_price_ttc));
+					$t = $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page * 2;
+					$b = $this->page_hauteur - $this->marge_basse;
+					$l = $this->marge_gauche * 4;
+					$r = $this->page_largeur - $this->marge_droite * 4;
+					$c = $this->page_largeur / 2;
+					$longeur_pied_page= $r - $l;
+					$pdf->line($l, $b, $r, $b); // line takes a position y in 2nd parameter and 4th parameter
+					$pdf->line($l, $t, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
+					$pdf->line($l, $b, $l, $t); // line takes a position y in 2nd parameter and 4th parameter
+					$pdf->line($r, $b, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
 				}
-
+				// Contact - Horaire
 				$pdf->setTextColor(0,0,0);
 				$pdf->setDrawColor(128,128,128);
 				$contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td><u>CONTACT</u> - <u>HORAIRES</u>
@@ -369,28 +348,22 @@ class pdf_fichemag_standard extends ModelePDFProduct
 						</td></tr><tr><td>Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30
 						</td></tr><tr><td>Fermé le Lundi matin, le dimanche et les jours fériés</td></tr></table>";
 				$posy = $t - pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($contact));
+				$posy -= is_string($barcode) ? 0 : 5;
 
 				$pdf->SetFont('', 'B', $default_font_size+5);
 				$pdf->setXY($this->marge_gauche * 2, $posy);
 				$pdf->MultiCell($this->page_largeur - $this->marge_gauche * 2 - $this->marge_droite * 2, 0, dol_htmlentitiesbr($contact), $border=1, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 
-				$pdf->setTextColor(255,0,0);
-				$html_price_ttc = "<h1>" . $price_ttc . "€&nbsp;ttc</h1>";
 
+				$pdf->setTextColor(255,0,0);
 				$pdf->SetFont('', 'B', $default_font_size+20);
 				$hauteur_price = pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($html_price_ttc));
-				$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
-				$pdf->MultiCell($longeur_pied_page / 2, 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
-
-				// Affiche zone infos
-				//$posy=$this->_tableau_info($pdf, $object, $bottomlasttab, $outputlangs);
+				$pdf->setXY(is_string($barcode) ? $c : $l, $t + ($b - $t) / 2 - ($hauteur_price/2));
+				$pdf->MultiCell(is_bool($barcode) ? $longeur_pied_page : $longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 
 				// Pied de page
 				/*
 					$this->_pagefoot($pdf, $object, $outputlangs);
-					if (method_exists($pdf, 'AliasNbPages')) {
-						$pdf->AliasNbPages();  // @phan-suppress-current-line PhanUndeclaredMethod
-					}
 				*/
 
 				$pdf->Close();
@@ -451,13 +424,9 @@ class pdf_fichemag_standard extends ModelePDFProduct
 
 		$pdf->SetDrawColor(128, 128, 128);
 		
-		// Output Rect
-		// $this->printRoundedRect($pdf, $this->marge_gauche, $tab_top, $largeurTableau, $tab_height, $this->corner_radius, $hidetop, $hidebottom, 'D'); // Rect takes a length in 3rd parameter and 4th parameter
-
 		$pdf->SetTextColor(0, 0, 0);
 		$pdf->SetFillColor(200,200,200);
 		$pdf->SetFont('', '', $default_font_size);
-		$pdf->setCellPaddings(2);
 
 		$cpt = 0;
 		$tab_bottom = $tab_top + 1;
@@ -579,11 +548,13 @@ class pdf_fichemag_standard extends ModelePDFProduct
 
 		// Marque of product
 
+		if ($object->marque){
 		$marge=10;
 		$pdf->SetFont('', 'B', $default_font_size + 15);
 		$pdf->setCellPadding(2);
 		$pdf->SetXY($this->format[0]*7/10-$pdf->GetStringWidth($object->marque)/2-$marge, $posy);
 		$pdf->MultiCell($pdf->GetStringWidth($object->marque)+$marge*2, 8, $object->marque, 1, 'C');
+		}
 		$posy += 18;
 
 		// Prévention prix fluctue
@@ -592,83 +563,12 @@ class pdf_fichemag_standard extends ModelePDFProduct
 		$pdf->SetFont('', 'B', $default_font_size);
 		$pdf->setCellPadding(4);
 		$pdf->writeHTMLCell(0, 0, $this->format[0]*5/12, $posy, dol_htmlentitiesbr($Message_Top), 1, 'L');
-
-		/*
-		$posy += 5;
-		$pdf->SetXY($posx, $posy);
-		$pdf->SetTextColor(0, 0, 60);
-		$pdf->MultiCell(100, 4, $outputlangs->transnoentities("Ref")." : ".$outputlangs->convToOutputCharset($object->ref), '', 'R');
-		*/
 		
-		$posy += 1;
+		$posy += 3;
 		$pdf->SetFont('', '', $default_font_size - 1);
-
-		/*if ($object->ref_client)
-		{
-			$posy+=5;
-			$pdf->SetXY($posx,$posy);
-			$pdf->SetTextColor(0,0,60);
-			$pdf->MultiCell(100, 3, $outputlangs->transnoentities("RefCustomer")." : " . $outputlangs->convToOutputCharset($object->ref_client), '', 'R');
-		}*/
-
-		/*$posy+=4;
-		$pdf->SetXY($posx,$posy);
-		$pdf->SetTextColor(0,0,60);
-		$pdf->MultiCell(100, 3, $outputlangs->transnoentities("OrderDate")." : " . dol_print_date($object->date,"%d %b %Y",false,$outputlangs,true), '', 'R');
-		*/
-
-		// Get contact
-		/*
-		if (getDolGlobalString('DOC_SHOW_FIRST_SALES_REP'))	{
-			$arrayidcontact=$object->getIdContact('internal','SALESREPFOLL');
-			if (count($arrayidcontact) > 0) {
-				$usertmp=new User($this->db);
-				$usertmp->fetch($arrayidcontact[0]);
-				$posy+=4;
-				$pdf->SetXY($posx,$posy);
-				$pdf->SetTextColor(0,0,60);
-				$pdf->MultiCell(100, 3, $langs->trans("SalesRepresentative")." : ".$usertmp->getFullName($langs), '', 'R');
-			}
-		}*/
-
-		$posy += 2;
 
 		// Show list of linked objects
 		$posy = pdf_writeLinkedObjects($pdf, $object, $outputlangs, $posx, $posy, 100, 3, 'R', $default_font_size);
-
-		//if ($showaddress) {
-		/*
-		// Sender properties
-		$carac_emetteur = pdf_build_address($outputlangs, $this->emetteur, $object->thirdparty);
-
-		// Show sender
-		$posy=42;
-		$posx=$this->marge_gauche;
-		if (getDolGlobalString('MAIN_INVERT_SENDER_RECIPIENT')) $posx=$this->page_largeur-$this->marge_droite-80;
-		$hautcadre=40;
-
-		// Show sender frame
-		$pdf->SetTextColor(0,0,0);
-		$pdf->SetFont('','', $default_font_size - 2);
-		$pdf->SetXY($posx,$posy-5);
-		$pdf->MultiCell(80, 5, $outputlangs->transnoentities("BillFrom"), 0, 'L');
-		$pdf->SetXY($posx,$posy);
-		$pdf->SetFillColor(230,230,230);
-		$pdf->MultiCell(82, $hautcadre, "", 0, 'R', 1);
-		$pdf->SetTextColor(0,0,60);
-
-		// Show sender name
-		$pdf->SetXY($posx+2,$posy+3);
-		$pdf->SetFont('','B', $default_font_size);
-		$pdf->MultiCell(80, 4, $outputlangs->convToOutputCharset($this->emetteur->name), 0, 'L');
-		$posy=$pdf->getY();
-
-		// Show sender information
-		$pdf->SetXY($posx+2,$posy);
-		$pdf->SetFont('','', $default_font_size - 1);
-		$pdf->MultiCell(80, 4, $carac_emetteur, 0, 'L');
-		*/
-		//}
 
 		$pdf->SetTextColor(0, 0, 0);
 
