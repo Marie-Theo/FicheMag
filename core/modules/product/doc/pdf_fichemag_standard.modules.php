@@ -34,6 +34,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 
 
 /**
@@ -219,6 +220,20 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite); // Left, Top, Right
 				
 				// Tableau des caractéristique
+
+
+				$extrafields = new ExtraFields($db);
+				$extralabels=$extrafields->fetch_name_optionals_label($object->table_element);
+
+				var_dump($extralabels);
+				var_dump($object->array_options);
+				$description = array();
+				foreach($extralabels as $key => $value){
+					if (str_contains($key, 'fichemag_')){
+						$description[str_replace('fichemag_', '', $key)] = $object->array_options['options_' . $key];
+					}
+				}
+				var_dump($description);
 
 				$price_ttc = dol_textishtml($object->price_ttc) ? $object->price_ttc : dol_nl2br($object->price_ttc, 1, true);
 				$price_ttc = price($price_ttc);
