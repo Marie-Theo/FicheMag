@@ -2,32 +2,37 @@
 
 ## Features
 
-Description of the module...
+Ce module offre un modèle de PDF pour le module produit.
+Il rajoute huits attributs au module Produit:
+
+  - Marque
+  - Processeur
+  - Mémoire vive
+  - Stockage
+  - Ecran
+  - Carte Graphique
+  - Système
+  - Usage
+  - Garantie
 
 <!--
 ![Screenshot fichemag](img/screenshot_fichemag.png?raw=true "FicheMag"){imgmd}
 -->
 
-Other external modules are available on [Dolistore.com](https://www.dolistore.com).
+##
 
-## Translations
+Si vous s
 
-Translations can be completed manually by editing files in the module directories under `langs`.
 
-<!--
-This module contains also a sample configuration for Transifex, under the hidden directory [.tx](.tx), so it is possible to manage translation using this service.
+## Personalisation
 
-For more information, see the [translator's documentation](https://wiki.dolibarr.org/index.php/Translator_documentation).
+Si vous souhaité rajouter ou retirer des attributs dans le modèle de PDF, il vous sufira d'allé dans "Configuration"> "Modules/Applications" allé dans les setting du module Produits, les attributs ce situe dans l'onglet "Attributs supplémentaires".
 
-There is a [Transifex project](https://transifex.com/projects/p/dolibarr-module-template) for this module.
--->
-
+Ici il est possible de modifier les attributs déjà mis par le module ou dans rajouter, pour que l'attribut soit pris en compte pas le PDF il faut que "Code de l'attribut" commence par "fichemag_"
 
 ## Installation
 
-Prerequisites: You must have Dolibarr ERP & CRM software installed. You can download it from [Dolistore.org](https://www.dolibarr.org).
-You can also get a ready-to-use instance in the cloud from https://saas.dolibarr.org
-
+Ce module ne fonctionne que si le module Produits est activée, le modèle utilise implémante les code barre mais peut fonctionné sans le module implémenté.
 
 ### From the ZIP file and GUI interface
 
@@ -62,16 +67,16 @@ Note: If this screen tells you that there is no "custom" directory, check that y
         ```
 -->
 
-<!--
-
 ### From a GIT repository
 
 Clone the repository in `$dolibarr_main_document_root_alt/fichemag`
 
 ```shell
-cd ....../custom
-git clone git@github.com:gitlogin/fichemag.git fichemag
+cd ....../htdocs/custom
+git clone https://github.com/Marie-Theo/FicheMag fichemag
 ```
+
+<!--
 
 -->
 
