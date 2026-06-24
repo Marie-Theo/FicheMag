@@ -86,7 +86,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 
 		$this->db = $db;
 		$this->name = "fiche Magasin";
-		$this->description = $langs->trans("DocModelFichemagDescription");
+		$this->description = $langs->trans("Modèle de PDF fiche pouvant etre exposé en magasin");
 
 		// Page size for A4 format
 		$this->type = 'pdf';

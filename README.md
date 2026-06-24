@@ -1,9 +1,9 @@
 # FICHEMAG FOR [DOLIBARR ERP & CRM](https://www.dolibarr.org)
 
-## Features
+## Fonctionnalité
 
 Ce module offre un modèle de PDF pour le module produit.
-Il rajoute huits attributs au module Produit:
+Il rajoute huit attributs au module Produit par défaut:
 
   - Marque
   - Processeur
@@ -19,24 +19,46 @@ Il rajoute huits attributs au module Produit:
 ![Screenshot fichemag](img/screenshot_fichemag.png?raw=true "FicheMag"){imgmd}
 -->
 
-##
+## Utilisation
 
-Si vous s
+Les huit attributs sont paramètrables lors de la création du produit puis modifiable depuis l'affichage de celui-ci.
 
+Si vous voulez que le modèle soit celui généré par défaut dans la liste des Modèles de documents:
+  - Connectez-vous en tant que super-administrateur
+  - Allez dans "Accueil"> "Configuration"> "Modules/Applications"
+  - Allez dans les setting du module Produits
+  - Vous pouvez choisir le modèle par défaut ici, dans "Modèle de document pour la fiche produit"
+  - \(Assurez-vous que l'état du modèle "fiche Magasin" soit activé, sinon il ne vous sera pas proposé dans les fiches produits !!\)
 
-## Personalisation
+Pour générer une fiche produit de ce module, il vous suffit d'aller sur un produit dans la liste de produits du module de Dolibarr et d'y choisir le modèle "fiche Magasin" dans les modèles de documents.
+Une modification des attributs nécessitera une regénération du modèle !
 
-Si vous souhaité rajouter ou retirer des attributs dans le modèle de PDF, il vous sufira d'allé dans "Configuration"> "Modules/Applications" allé dans les setting du module Produits, les attributs ce situe dans l'onglet "Attributs supplémentaires".
+## Configuration
 
-Ici il est possible de modifier les attributs déjà mis par le module ou dans rajouter, pour que l'attribut soit pris en compte pas le PDF il faut que "Code de l'attribut" commence par "fichemag_"
+Si vous souhaitez rajouter ou retirer des attributs dans le modèle de PDF :
+  - Connectez-vous en tant que super-administrateur
+  - Allez dans "Accueil"> "Configuration"> "Modules/Applications"
+  - Allez dans les setting du module Produits
+  - Les attributs ce situe dans l'onglet "Attributs supplémentaires".
+
+Ici il est possible de modifier les attributs déjà mis par le module ou dans rajouter (huit maximum sans compter l'attribut marque), pour que l'attribut soit pris en compte par le PDF il faut que le "Code de l'attribut" commence par "fichemag_" pour qu'il soit pris en compte.
 
 ## Installation
 
-Ce module ne fonctionne que si le module Produits est activée, le modèle utilise implémante les code barre mais peut fonctionné sans le module implémenté.
+Ce module ne fonctionne que si le module Produits est activé, le modèle utilisé implémante les code-barres mais peut fonctionner sans.
+
+## Avec un dossier ZIP
+
+Si le module est prêt à etre déployé 
+
+
+
+
+
 
 ### From the ZIP file and GUI interface
 
-If the module is a ready-to-deploy zip file, so with a name `module_xxx-version.zip` (e.g., when downloading it from a marketplace like [Dolistore](https://www.dolistore.com)),
+If the module is a ready-to-deploy zip file, so with a name `module_xxx-version.zip`,
 go to menu `Home> Setup> Modules> Deploy external module` and upload the zip file.
 
 <!--
