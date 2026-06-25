@@ -609,8 +609,11 @@ foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 }
 
 if (empty($setupnotempty)) {
-	print '<br>'.$langs->trans("NothingToSetup");
-	print '<br>'."Vous pouvez choisir le modèle de fichemag à utiliser par defaut dans la configuration du module produit.";
+	print '<br>'.$langs->trans("NothingToSetup")."<br>";
+	print '<br>'."Vous pouvez choisir le modèle de fichemag à utiliser par defaut dans la configuration du module produit."."<br>";
+	print '<br>'."Plus d'information dans :";
+	// print "<br>>> <a href=".$_SERVER['HTTP_REFERER'].">".$langs->trans("About")."</a>";
+	print ''.dolGetButtonAction('', $langs->trans('About'), 'default', $_SERVER["HTTP_REFERER"]);
 }
 
 // Page end
