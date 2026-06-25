@@ -3,6 +3,7 @@
 ## Fonctionnalité
 
 Ce module offre un modèle de PDF pour le module produit.
+
 Il rajoute huit attributs au module Produit par défaut:
 
   - Marque
@@ -14,6 +15,7 @@ Il rajoute huit attributs au module Produit par défaut:
   - Système
   - Usage
   - Garantie
+
 ## Utilisation
 
 Les huit attributs sont paramètrables lors de la création du produit puis modifiable depuis l'affichage de celui-ci.
