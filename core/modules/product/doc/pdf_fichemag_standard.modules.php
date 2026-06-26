@@ -342,10 +342,20 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				// Contact - Horaire
 				$pdf->setTextColor(0,0,0);
 				$pdf->setDrawColor(128,128,128);
-				$contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td><u>CONTACT</u> - <u>HORAIRES</u>
-						</td></tr><tr><td>02.33.60.89.01  contact@misinformatique.com
-						</td></tr><tr><td>Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30
-						</td></tr><tr><td>Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30
+				$contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td><u>CONTACT</u> - <u>HORAIRES</u>";
+				if (!empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL")) || !empty(getDolGlobalString("MAIN_INFO_SOCIETE_MAIL"))){
+					$contact .= "</td></tr><tr><td>";
+					$contact .= dol_print_phone(getDolGlobalString("MAIN_INFO_SOCIETE_TEL"), $countrycode = '', $cid = 0, $socid = 0, $addlink = '', $separ = '.');
+					if (!empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL"))){$contact .= "  ";}
+					$contact .= getDolGlobalString("MAIN_INFO_SOCIETE_MAIL");
+				}
+				if (!empty(getDolGlobalString("FICHEMAG_HOURLY_WEEK"))){
+					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY_WEEK");
+				}
+				if (!empty(getDolGlobalString("FICHEMAG_HOURLY_WEEK_END"))){
+					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY_WEEK_END");
+				}
+				$contact .= "
 						</td></tr><tr><td>Fermé le Lundi matin, le dimanche et les jours fériés</td></tr></table>";
 				$posy = $t - pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($contact));
 				$posy -= is_string($barcode) ? 0 : 5;
