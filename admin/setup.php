@@ -193,8 +193,7 @@ if (!$user->admin) {
 // Setup conf for a selection of a boolean
 $item = $formSetup->newItem('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')->setAsYesNo();
 $item->nameText = "Autorisé le téléchargement de PDF d'un produit";
-$item->helpText = "Permettra la création d'un Qr code sur le PDF renvoyant permettant le téléchargement du PDF";
-$item->defaultFieldValue = ajax_constantonoff("PRODUIT_SOUSPRODUITS", array(), $conf->entity, 0, 0, 1, 0);
+$item->helpText = "Permettra la création d'un Qr code sur le PDF renvoyant permettant le téléchargement du PDF.<br>Le Qr code ne sera fonctionnel que si votre Dolibarr a un nom de dommaine pour y accéder depuis le web.";
 
 // Add a title for a new section
 $item = $formSetup->newItem('NewSection')->setAsTitle();
