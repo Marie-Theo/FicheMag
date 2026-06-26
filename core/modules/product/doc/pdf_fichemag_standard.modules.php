@@ -349,8 +349,13 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					if (!empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL"))){$contact .= "  ";}
 					$contact .= getDolGlobalString("MAIN_INFO_SOCIETE_MAIL");
 				}
-				$contact .= "</td></tr><tr><td>Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30
-						</td></tr><tr><td>Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30
+				if (!empty(getDolGlobalString("FICHEMAG_HOURLY_WEEK"))){
+					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY_WEEK");
+				}
+				if (!empty(getDolGlobalString("FICHEMAG_HOURLY_WEEK_END"))){
+					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY_WEEK_END");
+				}
+				$contact .= "
 						</td></tr><tr><td>Fermé le Lundi matin, le dimanche et les jours fériés</td></tr></table>";
 				$posy = $t - pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($contact));
 				$posy -= is_string($barcode) ? 0 : 5;

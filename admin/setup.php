@@ -23,6 +23,9 @@
  * \brief   FicheMag setup page.
  */
 
+error_reporting(E_ALL);
+ini_set('display_errors',1);
+
 // Load Dolibarr environment
 $res = 0;
 // Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
@@ -187,6 +190,16 @@ $item->cssClass = 'minwidth500';
 */
 // use with getDolGlobalString()
 
+// Setup conf for a selection of a boolean
+$item = $formSetup->newItem('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')->setAsYesNo();
+$item->nameText = "Autorisé le téléchargement de PDF d'un produit";
+$item->helpText = "Permettra la création d'un Qr code sur le PDF renvoyant permettant le téléchargement du PDF";
+$item->defaultFieldValue = ajax_constantonoff("PRODUIT_SOUSPRODUITS", array(), $conf->entity, 0, 0, 1, 0);
+
+// Add a title for a new section
+$item = $formSetup->newItem('NewSection')->setAsTitle();
+$item->nameText = 'Contenue du PDF';
+
 // Setup conf for selection of a simple string input
 $item = $formSetup->newItem('FICHEMAG_HOURLY_WEEK');
 $item->nameText = 'Horaire de semaine';
@@ -201,6 +214,7 @@ $item->defaultFieldValue = "Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30"
 $item->fieldAttr['placeholder'] = "Le samedi (fermé l'après-midi) : x h x - x h x";
 $item->helpText = 'Horaire de fin de semaine écrit dans le pied de page des PDF';
 
+
 //$item = $formSetup->newItem('FICHEMAG_MYPARAM13')->setAsDate();	// Not yet implemented
 
 // End of definition of parameters
@@ -213,7 +227,7 @@ $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 $moduledir = 'fichemag';
 $myTmpObjects = array();
 // TODO Scan list of objects to fill this array
-$myTmpObjects['fichemag'] = array('label' => 'MyObject', 'includerefgeneration' => 0, 'includedocgeneration' => 0, 'class' => 'MyObject');
+$myTmpObjects['fichemag'] = array('label' => 'MyObject', 'includerefgeneration' => 0, 'includedocgeneration' => 1, 'class' => 'MyObject');
 
 /*
  * Actions
@@ -250,29 +264,29 @@ if ($action == 'updateMask') {
 
 	// Search template files
 	$file = '';
-	$className = '';
+	$classname = '';
 	$dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
 	foreach ($dirmodels as $reldir) {
-		$file = dol_buildpath($reldir."core/modules/fichemag/doc/pdf_".$modele.".modules.php", 0);
+		$file = dol_buildpath($reldir."core/modules/product/doc/pdf_".$modele.".modules.php", 0);
 		if (file_exists($file)) {
-			$className = "pdf_".$modele;
+			$classname = "pdf_".$modele;
 			break;
 		}
 	}
 
-	if ($className !== '') {
+	if ($classname !== '') {
 		require_once $file;
 
-		$module = new $className($db);
+		$module = new $classname($db);
 
-		'@phan-var-force ModelePDFMyObject $module';
+		'@phan-var-force ModelePDFProduct $module';
 
 		if ($module->write_file($product, $langs, '') > 0) {
-			header("Location: ".DOL_URL_ROOT."/document.php?modulepart=fichemag&file=SPECIMEN.pdf");
+			header("Location: ".DOL_URL_ROOT."/document.php?modulepart=product&file=SPECIMEN.pdf");
 			return;
 		} else {
-			setEventMessages($module->error, null, 'errors');
-			dol_syslog($module->error, LOG_ERR);
+			setEventMessages($obj->error, $obj->errors, 'errors');
+			dol_syslog($obj->error, LOG_ERR);
 		}
 	} else {
 		setEventMessages($langs->trans("ErrorModuleNotFound"), null, 'errors');
@@ -298,20 +312,16 @@ if ($action == 'updateMask') {
 		}
 	}
 } elseif ($action == 'setdoc') {
-	// Set or unset default model
-	if (!empty($tmpobjectkey)) {
-		$constforval = 'FICHEMAG_'.strtoupper($tmpobjectkey).'_ADDON_PDF';
-		if (dolibarr_set_const($db, $constforval, $value, 'chaine', 0, '', $conf->entity)) {
-			// The constant that was read before the new set
-			// We therefore requires a variable to have a coherent view
-			$conf->global->{$constforval} = $value;
-		}
+	if (dolibarr_set_const($db, "PRODUCT_ADDON_PDF", $value, 'chaine', 0, '', $conf->entity)) {
+		// La constante qui a ete lue en avant du nouveau set
+		// on passe donc par une variable pour avoir un affichage coherent
+		$conf->global->PRODUCT_ADDON_PDF = $value;
+	}
 
-		// We disable/enable the document template (into llx_document_model table)
-		$ret = delDocumentModel($value, $type);
-		if ($ret > 0) {
-			$ret = addDocumentModel($value, $type, $label, $scandir);
-		}
+	// On active le modele
+	$ret = delDocumentModel($value, $type);
+	if ($ret > 0) {
+		$ret = addDocumentModel($value, $type, $label, $scandir);
 	}
 } elseif ($action == 'unsetdoc') {
 	if (!empty($tmpobjectkey)) {
@@ -483,11 +493,11 @@ foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 
 		print load_fiche_titre($langs->trans("DocumentModules", $myTmpObjectKey), '', '');
 
-		// Load array def with activated templates
+		// Module to build doc
 		$def = array();
 		$sql = "SELECT nom";
-		$sql .= " FROM ".$db->prefix()."document_model";
-		$sql .= " WHERE type = '".$db->escape($type)."'";
+		$sql .= " FROM ".MAIN_DB_PREFIX."document_model";
+		$sql .= " WHERE type = 'product'";
 		$sql .= " AND entity = ".$conf->entity;
 		$resql = $db->query($sql);
 		if ($resql) {
@@ -495,7 +505,9 @@ foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 			$num_rows = $db->num_rows($resql);
 			while ($i < $num_rows) {
 				$array = $db->fetch_array($resql);
-				array_push($def, $array[0]);
+				if (is_array($array)) {
+					array_push($def, $array[0]);
+				}
 				$i++;
 			}
 		} else {
@@ -514,108 +526,101 @@ foreach ($myTmpObjects as $myTmpObjectKey => $myTmpObjectArray) {
 
 		clearstatcache();
 
+		$filelist = array();
 		foreach ($dirmodels as $reldir) {
 			foreach (array('', '/doc') as $valdir) {
-				$realpath = $reldir."core/modules/".$moduledir.$valdir;
-				$dir = dol_buildpath($realpath);
+		$dir = dol_buildpath($reldir."core/modules/product".$valdir);
+		if (is_dir($dir)) {
+			$handle = opendir($dir);
+			if (is_resource($handle)) {
+				while (($file = readdir($handle)) !== false) {
+					$filelist[] = $file;
+				}
+				closedir($handle);
+				arsort($filelist);
 
-				if (is_dir($dir)) {
-					$handle = opendir($dir);
-					if (is_resource($handle)) {
-						$filelist = array();
-						while (($file = readdir($handle)) !== false) {
-							$filelist[] = $file;
-						}
-						closedir($handle);
-						arsort($filelist);
+				foreach ($filelist as $file) {
+					if (preg_match('/\.modules\.php$/i', $file) && preg_match('/^(pdf_|doc_)/', $file)) {
+						if (file_exists($dir.'/'.$file)) {
+							$name = substr($file, 4, dol_strlen($file) - 16);
+							$classname = substr($file, 0, dol_strlen($file) - 12);
 
-						foreach ($filelist as $file) {
-							if (preg_match('/\.modules\.php$/i', $file) && preg_match('/^(pdf_|doc_)/', $file)) {
-								if (file_exists($dir.'/'.$file)) {
-									$name = substr($file, 4, dol_strlen($file) - 16);
-									$className = substr($file, 0, dol_strlen($file) - 12);
+							require_once $dir.'/'.$file;
+							$module = new $classname($db);
+							'@phan-var-force ModelePDFProduct $module';
 
-									require_once $dir.'/'.$file;
-									$module = new $className($db);
-									'@phan-var-force ModelePDFMyObject $module';
+							$modulequalified = 1;
+							if ($module->version == 'development' && getDolGlobalInt('MAIN_FEATURES_LEVEL') < 2) {
+								$modulequalified = 0;
+							}
+							if ($module->version == 'experimental' && getDolGlobalInt('MAIN_FEATURES_LEVEL') < 1) {
+								$modulequalified = 0;
+							}
 
-									$modulequalified = 1;
-									if ($module->version == 'development' && getDolGlobalInt('MAIN_FEATURES_LEVEL') < 2) {
-										$modulequalified = 0;
-									}
-									if ($module->version == 'experimental' && getDolGlobalInt('MAIN_FEATURES_LEVEL') < 1) {
-										$modulequalified = 0;
-									}
-
-									if ($modulequalified) {
-										print '<tr class="oddeven"><td width="100">';
-										print(empty($module->name) ? $name : $module->name);
-										print "</td><td>\n";
-										if (method_exists($module, 'info')) {
-											print $module->info($langs);  // @phan-suppress-current-line PhanUndeclaredMethod
-										} else {
-											print $module->description;
-										}
-										print '</td>';
-
-										// Active
-										if (in_array($name, $def)) {
-											print '<td class="center">'."\n";
-											print '<a href="'.$_SERVER["PHP_SELF"].'?action=del&token='.newToken().'&value='.urlencode($name).'">';
-											print img_picto($langs->trans("Enabled"), 'switch_on');
-											print '</a>';
-											print '</td>';
-										} else {
-											print '<td class="center">'."\n";
-											print '<a href="'.$_SERVER["PHP_SELF"].'?action=set&token='.newToken().'&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
-											print "</td>";
-										}
-
-										// Default
-										print '<td class="center">';
-										$constforvar = 'FICHEMAG_'.strtoupper($myTmpObjectKey).'_ADDON_PDF';
-										if (getDolGlobalString($constforvar) == $name) {
-											//print img_picto($langs->trans("Default"), 'on');
-											// Even if choice is the default value, we allow to disable it. Replace this with previous line if you need to disable unset
-											print '<a href="'.$_SERVER["PHP_SELF"].'?action=unsetdoc&token='.newToken().'&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'&amp;type='.urlencode($type).'" alt="'.$langs->trans("Disable").'">'.img_picto($langs->trans("Enabled"), 'on').'</a>';
-										} else {
-											print '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&token='.newToken().'&&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'" alt="'.$langs->trans("Default").'">'.img_picto($langs->trans("Disabled"), 'off').'</a>';
-										}
-										print '</td>';
-
-										// Info
-										$htmltooltip = ''.$langs->trans("Name").': '.$module->name;
-										$htmltooltip .= '<br>'.$langs->trans("Type").': '.($module->type ? $module->type : $langs->trans("Unknown"));
-										if ($module->type == 'pdf') {
-											$htmltooltip .= '<br>'.$langs->trans("Width").'/'.$langs->trans("Height").': '.$module->page_largeur.'/'.$module->page_hauteur;
-										}
-										$htmltooltip .= '<br>'.$langs->trans("Path").': '.preg_replace('/^\//', '', $realpath).'/'.$file;
-
-										$htmltooltip .= '<br><br><u>'.$langs->trans("FeaturesSupported").':</u>';
-										$htmltooltip .= '<br>'.$langs->trans("Logo").': '.yn($module->option_logo, 1, 1);
-										$htmltooltip .= '<br>'.$langs->trans("MultiLanguage").': '.yn($module->option_multilang, 1, 1);
-
-										print '<td class="center">';
-										print $form->textwithpicto('', $htmltooltip, 1, 'info');
-										print '</td>';
-
-										// Preview
-										print '<td class="center">';
-										if ($module->type == 'pdf') {
-											$newname = preg_replace('/_'.preg_quote(strtolower($myTmpObjectKey), '/').'/', '', $name);
-											print '<a href="'.$_SERVER["PHP_SELF"].'?action=specimen&module='.urlencode($newname).'&object='.urlencode($myTmpObjectKey).'">'.img_object($langs->trans("Preview"), 'pdf').'</a>';
-										} else {
-											print img_object($langs->transnoentitiesnoconv("PreviewNotAvailable"), 'generic');
-										}
-										print '</td>';
-
-										print "</tr>\n";
-									}
+							if ($modulequalified) {
+								print '<tr class="oddeven"><td width="100">';
+								print(empty($module->name) ? $name : $module->name);
+								print "</td><td>\n";
+								if (method_exists($module, 'info')) {
+									print $module->info($langs); // @phan-suppress-current-line PhanUndeclaredMethod
+								} else {
+									print $module->description;
 								}
+								print '</td>';
+
+								// Active
+								if (in_array($name, $def)) {
+									print '<td class="center">'."\n";
+									print '<a href="'.$_SERVER["PHP_SELF"].'?action=del&token='.newToken().'&value='.urlencode($name).'">';
+									print img_picto($langs->trans("Enabled"), 'switch_on');
+									print '</a>';
+									print '</td>';
+								} else {
+									print '<td class="center">'."\n";
+									print '<a href="'.$_SERVER["PHP_SELF"].'?action=set&token='.newToken().'&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+									print "</td>";
+								}
+
+								// Default
+								print '<td class="center">';
+								if (getDolGlobalString('PRODUCT_ADDON_PDF') == $name) {
+									print img_picto($langs->trans("Default"), 'on');
+								} else {
+									print '<a href="'.$_SERVER["PHP_SELF"].'?action=setdoc&token='.newToken().'&value='.urlencode($name).'&scan_dir='.urlencode($module->scandir).'&label='.urlencode($module->name).'" alt="'.$langs->trans("Default").'">'.img_picto($langs->trans("Disabled"), 'off').'</a>';
+								}
+								print '</td>';
+
+								// Info
+								$htmltooltip = ''.$langs->trans("Name").': '.$module->name;
+								$htmltooltip .= '<br>'.$langs->trans("Type").': '.($module->type ? $module->type : $langs->trans("Unknown"));
+								if ($module->type == 'pdf') {
+									$htmltooltip .= '<br>'.$langs->trans("Width").'/'.$langs->trans("Height").': '.$module->page_largeur.'/'.$module->page_hauteur;
+								}
+								$htmltooltip .= '<br><br><u>'.$langs->trans("FeaturesSupported").':</u>';
+								$htmltooltip .= '<br>'.$langs->trans("Logo").': '.yn($module->option_logo, 1, 1);
+								$htmltooltip .= '<br>'.$langs->trans("MultiLanguage").': '.yn($module->option_multilang, 1, 1);
+
+
+								print '<td class="center">';
+								print $form->textwithpicto('', $htmltooltip, 1, 'info');
+								print '</td>';
+
+								// Preview
+								print '<td class="center">';
+								if ($module->type == 'pdf') {
+									print '<a href="'.$_SERVER["PHP_SELF"].'?action=specimen&module='.$name.'">'.img_object($langs->trans("Preview"), 'contract').'</a>';
+								} else {
+									print img_object($langs->transnoentitiesnoconv("PreviewNotAvailable"), 'generic');
+								}
+								print '</td>';
+
+								print "</tr>\n";
 							}
 						}
 					}
 				}
+			}
+		}
 			}
 		}
 
