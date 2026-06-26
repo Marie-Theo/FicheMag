@@ -404,7 +404,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 						$c = ($this->page_largeur / 2);
 						$longeur_pied_page= $r - $l;
 						// récupéré la hauteur et la largeur de l'image
-						$heightBarCode = $padding_pied_page;
+						$heightBarCode = $b - $t;
 						$widthBarCode = $longeur_pied_page/2 ;
 						$posyBarCode= $b - $heightBarCode ;
 						$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
