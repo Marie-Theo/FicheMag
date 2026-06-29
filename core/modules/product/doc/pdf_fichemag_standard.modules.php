@@ -293,12 +293,26 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$posy += 2;
 				$this->_tableau($pdf, $posy, $this->page_hauteur - $tab_top_newpage, 0, $outputlangs, 1, 0, $description);
 				
+				$model_pied_page = '';
+				if (is_string($barcode) && getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')){
+					// le code barre + le qr code + le prix
+					$model_pied_page = 'full';
+				} else if (is_string($barcode) && !getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')){
+					// le code barre + le prix
+					$model_pied_page = 'barcode';
+				} else if (getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD') == 1){
+					// le qr code + le prix
+					$model_pied_page = 'Qr code';
+				} else { // juste le prix
+					$model_pied_page = 'price';
+				}
+
 				// Code Barre + Prix
 				$pdf->setDrawColor(255, 0 ,0);
 				$html_price_ttc = "<h1>" . $price_ttc . "€&nbsp;ttc</h1>";
 				$padding_pied_page = 10;
 
-				if ($barcode){
+				if ($model_pied_page == 'barcode'){
 					$logo = $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
 					if (is_readable($logo)) {
 						// récupéré la hauteur et la largeur de l'image
@@ -312,10 +326,6 @@ class pdf_fichemag_standard extends ModelePDFProduct
 						$r = $this->page_largeur - $this->marge_droite * 2;
 						$c = ($this->page_largeur / 2);
 						$longeur_pied_page= $r - $l;
-						$pdf->line($l, $b, $r, $b); // line takes a position y in 2nd parameter and 4th parameter
-						$pdf->line($l, $t, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
-						$pdf->line($l, $b, $l, $t); // line takes a position y in 2nd parameter and 4th parameter
-						$pdf->line($r, $b, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
 						$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
 
 						// générer l'image
@@ -326,6 +336,87 @@ class pdf_fichemag_standard extends ModelePDFProduct
 						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound", $logo), 0, 'L');
 						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
 					}
+				} else if ($model_pied_page == 'Qr code'){
+					$padding_pied_page = 5;
+
+					// Le contenu de ton QR Code (URL du partage publique vers le document PDF de la fiche du produit)
+					$qrContent = 'https://dolibarr.mis-informatique.fr/document.php?hashp=1234567890ABCDEF';
+
+					// Paramètres du QR Code
+					$width = 35;           // Largeur
+					$height = 35;           // Hauteur
+					$style = array(
+						'border' => 2,
+						'vpadding' => 'auto',
+						'hpadding' => 'auto',
+						'fgcolor' => array(0,0,0),     // Couleur noire
+						'bgcolor' => array(255,255,255), // Couleur de fond blanche
+						'module_width' => 1,           // Épaisseur des points
+						'module_height' => 1           // Hauteur des points
+					);
+					
+					$t = $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page * 2;
+					$b = $this->page_hauteur - $this->marge_basse;
+					$l = $this->marge_gauche * 2;
+					$r = $this->page_largeur - $this->marge_droite * 2;
+					$c = $this->page_largeur / 2;
+					$longeur_pied_page= $r - $l;
+					$pos_x = $longeur_pied_page/4 + $l - $width /2;
+					$pos_y = $t + ($b - $t) / 2 - $height/2;
+					$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
+
+				} else if ($model_pied_page == 'full'){
+					$padding_pied_page = 5;
+					// Le contenu de ton QR Code (URL du partage publique vers le document PDF de la fiche du produit)
+					$qrContent = 'https://dolibarr.mis-informatique.fr/document.php?hashp=1234567890ABCDEF';
+
+					// Paramètres du QR Code
+					$width = 35;           // Largeur
+					$height = 35;           // Hauteur
+					$style = array(
+						'border' => 2,
+						'vpadding' => 'auto',
+						'hpadding' => 'auto',
+						'fgcolor' => array(0,0,0),     // Couleur noire
+						'bgcolor' => array(255,255,255), // Couleur de fond blanche
+						'module_width' => 1,           // Épaisseur des points
+						'module_height' => 1           // Hauteur des points
+					);
+					
+					$t = $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page * 2;
+					$b = $this->page_hauteur - $this->marge_basse;
+					$l = $this->marge_gauche * 2;
+					$r = $this->page_largeur - $this->marge_droite * 2;
+					$c = $this->page_largeur / 2;
+					$longeur_pied_page= $r - $l;
+					$pos_x = $longeur_pied_page/4 + $l - $width /2;
+					$pos_y = $t + ($b - $t) / 2 - $height/2;
+					$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
+
+					// Placement du code barre
+					$logo = $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
+					if (is_readable($logo)) {
+						// définir la hauteur et la largeur de l'image
+						if (getDolGlobalString('FICHEMAG_CODE_BARR_STYLE') == 'Style 1'){
+							$heightBarCode = $padding_pied_page;
+							$widthBarCode = $longeur_pied_page/2 - $padding_pied_page * 4 ;
+							$posyBarCode = $b - $heightBarCode - $padding_pied_page ;
+							$posxBarCode = $c + $padding_pied_page * 2;
+						} else {
+							$heightBarCode = $b - $t;
+							$widthBarCode = $longeur_pied_page/2 ;
+							$posyBarCode= $t ;
+							$posxBarCode = $l;
+						}
+						// générer l'image
+						$pdf->Image($logo, $posxBarCode, $posyBarCode, $widthBarCode, $heightBarCode, ); // width=0 (auto)
+					} else {
+						$pdf->SetTextColor(200, 0, 0);
+						$pdf->SetFont('', 'B', $default_font_size - 2);
+						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound", $logo), 0, 'L');
+						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
+					}
+
 				} else {
 					$height = pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($html_price_ttc));
 					$t = $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page * 2;
@@ -339,10 +430,16 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					$pdf->line($l, $b, $l, $t); // line takes a position y in 2nd parameter and 4th parameter
 					$pdf->line($r, $b, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
 				}
+
+				$pdf->line($l, $b, $r, $b); // line takes a position y in 2nd parameter and 4th parameter
+				$pdf->line($l, $t, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
+				$pdf->line($l, $b, $l, $t); // line takes a position y in 2nd parameter and 4th parameter
+				$pdf->line($r, $b, $r, $t); // line takes a position y in 2nd parameter and 4th parameter
+
 				// Contact - Horaire
 				$pdf->setTextColor(0,0,0);
 				$pdf->setDrawColor(128,128,128);
-				$contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td><u>CONTACT</u> - <u>HORAIRES</u>";
+				$contact = "";
 				if (!empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL")) || !empty(getDolGlobalString("MAIN_INFO_SOCIETE_MAIL"))){
 					$contact .= "</td></tr><tr><td>";
 					$contact .= dol_print_phone(getDolGlobalString("MAIN_INFO_SOCIETE_TEL"), $countrycode = '', $cid = 0, $socid = 0, $addlink = '', $separ = '.');
@@ -355,21 +452,39 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				if (!empty(getDolGlobalString("FICHEMAG_HOURLY_WEEK_END"))){
 					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY_WEEK_END");
 				}
-				$contact .= "
-						</td></tr><tr><td>Fermé le Lundi matin, le dimanche et les jours fériés</td></tr></table>";
-				$posy = $t - pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($contact));
-				$posy -= is_string($barcode) ? 0 : 5;
+				if (!empty(getDolGlobalString("FICHEMAG_ADDITIONAL_INFO"))){
+					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_ADDITIONAL_INFO");
+				}
+				if ($contact != "") {
+					$contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td><u>CONTACT</u> - <u>HORAIRES</u>" . $contact . "</td></tr></table>";
 
-				$pdf->SetFont('', 'B', $default_font_size+5);
-				$pdf->setXY($this->marge_gauche * 2, $posy);
-				$pdf->MultiCell($this->page_largeur - $this->marge_gauche * 2 - $this->marge_droite * 2, 0, dol_htmlentitiesbr($contact), $border=1, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+					$posy = $t - pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($contact));
+					$posy -= is_string($barcode) ? 0 : 5;
 
+					$pdf->SetFont('', 'B', $default_font_size+5);
+					$pdf->setXY($this->marge_gauche * 2, $posy);
+					$pdf->MultiCell($this->page_largeur - $this->marge_gauche * 2 - $this->marge_droite * 2, 0, dol_htmlentitiesbr($contact), $border=1, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+				}
 
 				$pdf->setTextColor(255,0,0);
 				$pdf->SetFont('', 'B', $default_font_size+20);
 				$hauteur_price = pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($html_price_ttc));
-				$pdf->setXY(is_string($barcode) ? $c : $l, $t + ($b - $t) / 2 - ($hauteur_price/2));
-				$pdf->MultiCell(is_bool($barcode) ? $longeur_pied_page : $longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+
+				if ($model_pied_page == 'barcode'){
+					$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
+					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+				} else if ($model_pied_page == 'Qr code') {
+					$pdf->write2DBarcode($qrContent, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
+					$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
+					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+				} else if ($model_pied_page == 'full') {
+					$pdf->write2DBarcode($qrContent, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
+					$pdf->setXY($c, getDolGlobalString('FICHEMAG_CODE_BARR_STYLE') == 'Style 1' ? $t + $padding_pied_page : $t + ($b - $t) / 2 - $hauteur_price/2);
+					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+				} else {
+					$pdf->setXY($l, $t + ($b - $t) / 2 - ($hauteur_price/2));
+					$pdf->MultiCell($longeur_pied_page , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+				}
 
 				// Pied de page
 				/*
