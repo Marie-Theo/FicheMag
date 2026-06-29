@@ -396,21 +396,20 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					// Placement du code barre
 					$logo = $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
 					if (is_readable($logo)) {
-
-						$t = $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page * 2;
-						$b = $this->page_hauteur - $this->marge_basse;
-						$l = $this->marge_gauche * 2;
-						$r = $this->page_largeur - $this->marge_droite * 2;
-						$c = ($this->page_largeur / 2);
-						$longeur_pied_page= $r - $l;
-						// récupéré la hauteur et la largeur de l'image
-						$heightBarCode = $b - $t;
-						$widthBarCode = $longeur_pied_page/2 ;
-						$posyBarCode= $b - $heightBarCode ;
-						$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
-
+						// définir la hauteur et la largeur de l'image
+						if (getDolGlobalString('FICHEMAG_CODE_BARR_STYLE') == 'Style 1'){
+							$heightBarCode = $padding_pied_page;
+							$widthBarCode = $longeur_pied_page/2 - $padding_pied_page * 4 ;
+							$posyBarCode = $b - $heightBarCode - $padding_pied_page ;
+							$posxBarCode = $c + $padding_pied_page * 2;
+						} else {
+							$heightBarCode = $b - $t;
+							$widthBarCode = $longeur_pied_page/2 ;
+							$posyBarCode= $t ;
+							$posxBarCode = $l;
+						}
 						// générer l'image
-						$pdf->Image($logo, $l , $posyBarCode, $widthBarCode, $heightBarCode); // width=0 (auto)
+						$pdf->Image($logo, $posxBarCode, $posyBarCode, $widthBarCode, $heightBarCode, ); // width=0 (auto)
 					} else {
 						$pdf->SetTextColor(200, 0, 0);
 						$pdf->SetFont('', 'B', $default_font_size - 2);
@@ -475,16 +474,13 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
 					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 				} else if ($model_pied_page == 'Qr code') {
-
-					// 'QRCODE,H' signifie : Type QR Code, Niveau de correction d'erreur Haut (H)
 					$pdf->write2DBarcode($qrContent, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
 					$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
 					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 				} else if ($model_pied_page == 'full') {
-					// 'QRCODE,H' signifie : Type QR Code, Niveau de correction d'erreur Haut (H)
 					$pdf->write2DBarcode($qrContent, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
-					$pdf->setXY(is_string($barcode) ? $c : $l, $t + ($b - $t) / 2 - ($hauteur_price/2));
-					$pdf->MultiCell(is_bool($barcode) ? $longeur_pied_page : $longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
+					$pdf->setXY($c, getDolGlobalString('FICHEMAG_CODE_BARR_STYLE') == 'Style 1' ? $t + $padding_pied_page : $t + ($b - $t) / 2 - $hauteur_price/2);
+					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 				} else {
 					$pdf->setXY($l, $t + ($b - $t) / 2 - ($hauteur_price/2));
 					$pdf->MultiCell($longeur_pied_page , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);

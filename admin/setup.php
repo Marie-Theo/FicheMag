@@ -192,12 +192,12 @@ if (!$user->admin) {
 
 // Setup conf for a selection of a boolean
 $item = $formSetup->newItem('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')->setAsYesNo();
-$item->nameText = "Autorisé le téléchargement de PDF d'un produit";
+$item->nameText = "Autorisé le téléchargement de PDF des produit via un QR-code";
 $item->helpText = "Permettra la création d'un Qr code sur le PDF renvoyant permettant le téléchargement du PDF.<br>Le Qr code ne sera fonctionnel que si votre Dolibarr a un nom de dommaine pour y accéder depuis le web.";
 
 // Add a title for a new section
 $item = $formSetup->newItem('NewSection')->setAsTitle();
-$item->nameText = 'Contenue du PDF';
+$item->nameText = 'Contenue du PDF (optionnel)';
 
 // Setup conf for selection of a simple string input
 $item = $formSetup->newItem('FICHEMAG_HOURLY_WEEK');
@@ -219,6 +219,16 @@ $item->nameText = "Information supplémentaire";
 $item->defaultFieldValue = "Fermé le Lundi matin, le dimanche et les jours fériés";
 $item->fieldAttr['placeholder'] = "Fermé le Lundi matin, le dimanche et les jours fériés";
 $item->helpText = 'Information supplémentaire écrit dans le pied de page des PDF';
+
+// Setup conf for a simple combo list
+$TField = array(
+'Style 1' => 'sous le prix',
+'Style 2' => 'sous le code barre',
+);
+
+$item = $formSetup->newItem('FICHEMAG_CODE_BARR_STYLE')->setAsSelect($TField);
+$item->nameText = "Style du Code Barre";
+$item->helpText = "Style d'affichage du Code Barre quand tous les éléments sont présent dans le pied de page (QR-code + Code barre)";
 
 //$item = $formSetup->newItem('FICHEMAG_MYPARAM13')->setAsDate();	// Not yet implemented
 
