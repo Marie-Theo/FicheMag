@@ -23,8 +23,6 @@
  * \brief   FicheMag setup page.
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors',1);
 
 // Load Dolibarr environment
 $res = 0;
@@ -61,7 +59,6 @@ if (!$res) {
 // Libraries
 require_once DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php";
 require_once '../lib/fichemag.lib.php';
-//require_once "../class/myclass.class.php";
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 
 /**
