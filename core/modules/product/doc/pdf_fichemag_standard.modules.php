@@ -254,14 +254,20 @@ class pdf_fichemag_standard extends ModelePDFProduct
 							break;
 						}
 					}
-
 					// Load barcode class
 					$classname = "mod".ucfirst($generator);
 					$module = new $classname($db);
 					if ($module->encodingIsSupported($encoding)) {
 						$result = $module->writeBarCode($code, $encoding, $readable);
 					}
-					// image is into file $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
+				}
+
+				if (getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')) {
+					require_once DOL_DOCUMENT_ROOT.'/core/lib/security2.lib.php';
+					require_once DOL_DOCUMENT_ROOT.'/ecm/class/ecmfiles.class.php';
+
+					$sharekey = getRandomPassword(true);
+					$downloadlink = DOL_MAIN_URL_ROOT.'/document.php?hashp='.$sharekey;
 				}
 				
 				// New page
@@ -291,8 +297,10 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
 
 				$posy += 2;
+				// créer le Tableau des composant
 				$this->_tableau($pdf, $posy, $this->page_hauteur - $tab_top_newpage, 0, $outputlangs, 1, 0, $description);
 				
+				// définir la disposition du pied de page
 				$model_pied_page = '';
 				if (is_string($barcode) && getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')){
 					// le code barre + le qr code + le prix
@@ -312,6 +320,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$html_price_ttc = "<h1>" . $price_ttc . "€&nbsp;ttc</h1>";
 				$padding_pied_page = 10;
 
+				// générer le Code Barre + le prix
 				if ($model_pied_page == 'barcode'){
 					$logo = $conf->barcode->dir_temp . '/barcode_' . $code . '_' . $encoding . '.png';
 					if (is_readable($logo)) {
@@ -336,11 +345,9 @@ class pdf_fichemag_standard extends ModelePDFProduct
 						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound", $logo), 0, 'L');
 						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
 					}
+				// générer le QR code + le prix
 				} else if ($model_pied_page == 'Qr code'){
 					$padding_pied_page = 5;
-
-					// Le contenu de ton QR Code (URL du partage publique vers le document PDF de la fiche du produit)
-					$qrContent = 'https://dolibarr.mis-informatique.fr/document.php?hashp=1234567890ABCDEF';
 
 					// Paramètres du QR Code
 					$width = 35;           // Largeur
@@ -365,10 +372,9 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					$pos_y = $t + ($b - $t) / 2 - $height/2;
 					$pdf->line($c, $b,$c, $t); // line takes a position y in 2nd parameter and 4th parameter
 
+				// générer le QR code + le Code Barre + le prix
 				} else if ($model_pied_page == 'full'){
 					$padding_pied_page = 5;
-					// Le contenu de ton QR Code (URL du partage publique vers le document PDF de la fiche du produit)
-					$qrContent = 'https://dolibarr.mis-informatique.fr/document.php?hashp=1234567890ABCDEF';
 
 					// Paramètres du QR Code
 					$width = 35;           // Largeur
@@ -417,6 +423,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 						$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
 					}
 
+				// générer juste le prix
 				} else {
 					$height = pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($html_price_ttc));
 					$t = $this->page_hauteur - $this->marge_basse - $height - $padding_pied_page * 2;
@@ -474,11 +481,11 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
 					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 				} else if ($model_pied_page == 'Qr code') {
-					$pdf->write2DBarcode($qrContent, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
+					$pdf->write2DBarcode($downloadlink, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
 					$pdf->setXY($c, $t + ($b - $t) / 2 - ($hauteur_price/2));
 					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 				} else if ($model_pied_page == 'full') {
-					$pdf->write2DBarcode($qrContent, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
+					$pdf->write2DBarcode($downloadlink, 'QRCODE,H', $pos_x, $pos_y, $w, $height, $style, 'N', false);
 					$pdf->setXY($c, getDolGlobalString('FICHEMAG_CODE_BARR_STYLE') == 'Style 1' ? $t + $padding_pied_page : $t + ($b - $t) / 2 - $hauteur_price/2);
 					$pdf->MultiCell($longeur_pied_page / 2 , 0, dol_htmlentitiesbr($html_price_ttc), $border=0, $align='C', $fill=false, $ln=1, $x=null, $y=null, $reseth=true, $stretch=0, $ishtml=true);
 				} else {
@@ -494,6 +501,31 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$pdf->Close();
 
 				$pdf->Output($file, 'F');
+
+				// 4) Indexer le fichier dans ecm_files avec CE MEME hash
+				$relativepath = $object->element.'/'.dol_sanitizeFileName($object->ref);
+				$filename = basename($file);
+
+				$ecmfile = new EcmFiles($this->db);
+				$result = $ecmfile->fetch(0, '', $relativepath.'/'.$filename);
+
+				if ($result > 0) {
+					// la ligne existe déjà (régénération du PDF) -> on met juste à jour le share
+					$ecmfile->share = $sharekey;
+					$ecmfile->update($user);
+				} else {
+					// nouvelle ligne
+					$ecmfile->filepath = $relativepath;
+					$ecmfile->filename = $filename;
+					$ecmfile->label = md5_file(dol_osencode($file));
+					$ecmfile->fullpath_orig = $file;
+					$ecmfile->gen_or_uploaded = 'generated';
+					$ecmfile->src_object_type = $object->table_element;
+					$ecmfile->src_object_id = $object->id;
+					$ecmfile->share = $sharekey;
+					$ecmfile->entity = $conf->entity;
+					$ecmfile->create($user);
+				}
 
 				// Add pdfgeneration hook
 				$hookmanager->initHooks(array('pdfgeneration'));
