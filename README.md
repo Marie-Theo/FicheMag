@@ -4,7 +4,7 @@
 
 Ce module offre un modèle de PDF pour le module produit.
 
-Il rajoute huit attributs au module Produit par défaut:
+Il rajoute par défaut huit attributs au module Produit:
 
   - Marque
   - Processeur
@@ -18,12 +18,12 @@ Il rajoute huit attributs au module Produit par défaut:
 
 ## Utilisation
 
-Les huit attributs sont paramètrables lors de la création du produit puis modifiable depuis l'affichage de celui-ci.
+Les huit attributs des caractéristiques sont paramètrables lors de la création du produit puis modifiable depuis l'affichage de celui-ci.
 
 Si vous voulez que le modèle soit celui généré par défaut dans la liste des Modèles de documents:
   - Connectez-vous en tant que super-administrateur
   - Allez dans "Accueil"> "Configuration"> "Modules/Applications"
-  - Allez dans les setting du module Produits
+  - Allez dans les setting du module Fichemag
   - Vous pouvez choisir le modèle par défaut ici, dans "Modèle de document pour la fiche produit"
   - \(Assurez-vous que l'état du modèle "fiche Magasin" soit activé, sinon il ne vous sera pas proposé dans les fiches produits !!\)
 
@@ -35,7 +35,7 @@ Une modification des attributs nécessitera une regénération du modèle !
 Si vous souhaitez rajouter ou retirer des attributs dans le modèle de PDF :
   - Connectez-vous en tant que super-administrateur
   - Allez dans "Accueil"> "Configuration"> "Modules/Applications"
-  - Allez dans les setting du module Produits
+  - Allez dans les setting du module Fichemag
   - Les attributs ce situe dans l'onglet "Attributs supplémentaires".
 
 Ici il est possible de modifier les attributs déjà mis par le module ou dans rajouter (huit maximum sans compter l'attribut marque), pour que l'attribut soit pris en compte par le PDF il faut que le "Code de l'attribut" commence par "fichemag_" pour qu'il soit pris en compte.
