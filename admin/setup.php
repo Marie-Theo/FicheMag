@@ -221,6 +221,7 @@ $item->helpText = 'Information supplémentaire écrit dans le pied de page des P
 $TField = array(
 'Style 1' => 'sous le prix',
 'Style 2' => 'sous le code barre',
+'Style 3' => 'sur le côter',
 );
 
 $item = $formSetup->newItem('FICHEMAG_CODE_BARR_STYLE')->setAsSelect($TField);
