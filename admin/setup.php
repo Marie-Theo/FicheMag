@@ -190,7 +190,12 @@ if (!$user->admin) {
 // Setup conf for a selection of a boolean
 $item = $formSetup->newItem('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')->setAsYesNo();
 $item->nameText = "Autorisé le téléchargement de PDF des produit via un QR-code";
-$item->helpText = "Permettra la création d'un Qr code sur le PDF renvoyant permettant le téléchargement du PDF.<br>Le Qr code ne sera fonctionnel que si votre Dolibarr a un nom de dommaine pour y accéder depuis le web.";
+$item->helpText = "Permettra la création d'un Qr code sur le PDF permettant de télécharger ce PDF.<br>Le Qr code ne sera fonctionnel que si votre Dolibarr a un nom de dommaine pour y accéder depuis le web.";
+
+// Setup conf for a selection of a boolean
+$item = $formSetup->newItem('FICHEMAG_ACTIVE_CODE_BARRE')->setAsYesNo();
+$item->nameText = "Affiché le Code Barre (seulement si le module est activé)";
+$item->helpText = "Cette option ne fonctionnera pas même si le module code barre par default de Dolibarr n'est pas activé.";
 
 // Add a title for a new section
 $item = $formSetup->newItem('NewSection')->setAsTitle();

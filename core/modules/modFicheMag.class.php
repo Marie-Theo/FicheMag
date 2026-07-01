@@ -28,7 +28,6 @@
  */
 include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
 
-
 /**
  *  Description and activation class for module FicheMag
  */
@@ -467,6 +466,15 @@ class modFicheMag extends DolibarrModules
 	public function init($options = '')
 	{
 		global $conf, $langs;
+
+		// activé automatiquement le module produit quand le module fichemag est installé
+		require_once DOL_DOCUMENT_ROOT.'/master.inc.php';
+		require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+
+		$mods = ['Product'];
+		foreach ($mods as $mod) {
+			activateModule('mod'.$mod);
+		}
 
 		// Create tables of module at module activation
 		//$result = $this->_load_tables('/install/mysql/', 'fichemag');

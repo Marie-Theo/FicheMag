@@ -27,9 +27,6 @@
  *	\brief      File of class to build PDF documents for products/services
  */
 
-// error_reporting(E_ALL);
-// ini_set('display_errors',1);
-
 require_once DOL_DOCUMENT_ROOT.'/core/modules/product/modules_product.class.php';
 require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
@@ -315,10 +312,10 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				
 				// définir la disposition du pied de page
 				$model_pied_page = '';
-				if (is_string($barcode) && getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')){
+				if ((is_string($barcode) && getDolGlobalString('FICHEMAG_ACTIVE_CODE_BARRE')) && getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')){
 					// le code barre + le qr code + le prix
 					$model_pied_page = 'full';
-				} else if (is_string($barcode) && !getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')){
+				} else if ((is_string($barcode) && getDolGlobalString('FICHEMAG_ACTIVE_CODE_BARRE')) && !getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD')){
 					// le code barre + le prix
 					$model_pied_page = 'barcode';
 				} else if (getDolGlobalString('PRODUCT_ALLOW_EXTERNAL_DOWNLOAD') == 1){
