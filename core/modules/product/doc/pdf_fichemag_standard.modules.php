@@ -463,22 +463,32 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				$pdf->SetFont('', 'B', $default_font_size+5);
 				$pdf->setDrawColor(128,128,128);
 				$contact = "";
+				$tele_or_mail = false;
+				$horaire = false;
+				$style_contact = getDolGlobalString("FICHEMAG_STYLE_CONTACT_HORAIRE");
 				if (!empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL")) || !empty(getDolGlobalString("MAIN_INFO_SOCIETE_MAIL"))){
-					$contact .= !empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL")) ? "</td></tr><tr><td>" . dol_print_phone(getDolGlobalString("MAIN_INFO_SOCIETE_TEL"), $countrycode = '', $cid = 0, $socid = 0, $addlink = '', $separ = '.') : "";
-					$contact .= empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL")) ? "" : "   ";
-					$contact .= getDolGlobalString("MAIN_INFO_SOCIETE_MAIL");
+					if (in_array($style_contact, ["Full", "Tel_Horaire", "Tel", "Contact"])){
+						$contact .= !empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL")) ? dol_print_phone(getDolGlobalString("MAIN_INFO_SOCIETE_TEL"), $countrycode = '', $cid = 0, $socid = 0, $addlink = '', $separ = '.') : "";
+
+					}
+					if (in_array($style_contact, ["Full", "Mail_Horaire", "Mail", "Contact"])){
+						$contact .= !empty(getDolGlobalString("MAIN_INFO_SOCIETE_TEL")) && in_array($style_contact, ["Full", "Tel_Horaire", "Tel", "Contact"]) ? " - " : "";
+						$contact .= getDolGlobalString("MAIN_INFO_SOCIETE_MAIL");
+					}
+					$tele_or_mail = true;
 				}
-				if (!empty(getDolGlobalString("FICHEMAG_HOURLY_WEEK"))){
-					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY_WEEK");
-				}
-				if (!empty(getDolGlobalString("FICHEMAG_HOURLY_WEEK_END"))){
-					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY_WEEK_END");
-				}
-				if (!empty(getDolGlobalString("FICHEMAG_ADDITIONAL_INFO"))){
-					$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_ADDITIONAL_INFO");
+				if (!empty(getDolGlobalString("FICHEMAG_HOURLY"))){
+					if (in_array($style_contact, ["Full", "Mail_Horaire", "Tel_Horaire", "Horaire"])){
+						$contact .= "</td></tr><tr><td>".getDolGlobalString("FICHEMAG_HOURLY");
+						$horaire = true;
+					}
 				}
 				if ($contact != "") {
-					$contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td><u>CONTACT</u> - <u>HORAIRES</u>" . $contact . "</td></tr></table>";
+					$titre_contact = "<table border=0 cellspacing='10' cellpadding='10'><tr><td>";
+					$titre_contact .= $tele_or_mail ? "<u>CONTACT</u>" : "";
+					$titre_contact .= ($tele_or_mail && $horaire) ? " - " : "";
+					$titre_contact .= $horaire ? "<u>HORAIRES</u>" : "";
+					$contact = $titre_contact . "<br>" . $contact . "</td></tr></table>";
 
 					$posy = $t - pdfGetHeightForHtmlContent($pdf, dol_htmlentitiesbr($contact)) - 3;
 
@@ -578,6 +588,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 		
 		$pdf->SetTextColor(0, 0, 0);
 		$pdf->SetFillColor(200,200,200);
+		$pdf->setCellPadding(4);
 		$pdf->SetFont('', '', $default_font_size);
 
 		$cpt = 0;
@@ -664,6 +675,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 
 		$pdf->SetXY($this->marge_gauche, $posy);
 
+		$Style_entete = '';
 		// Logo
 		if (!getDolGlobalInt('PDF_DISABLE_MYCOMPANY_LOGO')) {
 			if ($this->emetteur->logo) {
@@ -679,6 +691,7 @@ class pdf_fichemag_standard extends ModelePDFProduct
 				if (is_readable($logo)) {
 					$height = pdf_getHeightForLogo($logo);
 					$pdf->Image($logo, $this->marge_gauche, $posy, ($this->format[0]-10)/3, 0); // width=0 (auto)
+					print($pdf->GetY() + $height."<br>");
 				} else {
 					$pdf->SetTextColor(200, 0, 0);
 					$pdf->SetFont('', 'B', $default_font_size - 2);
@@ -686,35 +699,44 @@ class pdf_fichemag_standard extends ModelePDFProduct
 					$pdf->MultiCell($w, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
 				}
 			} else {
-				$text = $this->emetteur->name;
-				$pdf->MultiCell($w, 4, $outputlangs->convToOutputCharset($text), 0, $ltrdirection);
+				$Style_entete = 'center';
 			}
 		}
 
 		$pdf->SetFont('', 'B', $default_font_size + 3);
-		$pdf->SetXY($posx, $posy);
 		$pdf->SetTextColor(0, 0, 60);
 
 		// Marque of product
 
+		$Message_Top = getDolGlobalString("FICHEMAG_HEAD_INFO");
 		if ($object->marque){
-		$marge=10;
-		$pdf->SetFont('', 'B', $default_font_size + 15);
-		$pdf->setCellPadding(2);
-		$pdf->SetXY($this->format[0]*7/10-$pdf->GetStringWidth($object->marque)/2-$marge, $posy);
-		$pdf->MultiCell($pdf->GetStringWidth($object->marque)+$marge*2, 8, $object->marque, 1, 'C');
+			if (empty($Message_Top)) {
+				$posy += 13;
+			}
+			$marge=10;
+			$pdf->SetFont('', 'B', $default_font_size + 15);
+			$pdf->setCellPadding(2);
+			$posx = $Style_entete == 'center' ? $this->page_largeur / 2 - $pdf->GetStringWidth($object->marque) /1.2 : $this->format[0]*7/10-$pdf->GetStringWidth($object->marque)/2-$marge;
+			$pdf->SetXY($posx, $posy);
+			$pdf->MultiCell($pdf->GetStringWidth($object->marque)+$marge*2, 8, $object->marque, 1, 'C');
+			print($pdf->GetY()."<br>");
 		}
+
 		$posy += 18;
-
 		// Prévention prix fluctue
-		$Message_Top = "<p style='margin:20px;'>ATTENTION, COMPTE TENU DES PERTURBATIONS ACTUELLES DU MARCHÉ INFORMATIQUE, LE PRIX INDIQUÉ SUR CETTE FICHE <u>N'EST PAS FIXE POUR UNE DURÉE INDÉTERMINÉE</u>. <u style='color:red;'>LE PRIX QUI S'APPLIQUE EST CELUI AFFICHÉ EN MAGASIN LE JOUR DE LA VENTE</u>.</p>";
+		if (!empty($Message_Top)){
+		// if (!empty($Message_Top)){
 
-		$pdf->SetFont('', 'B', $default_font_size);
-		$pdf->setCellPadding(4);
-		$pdf->writeHTMLCell(0, 0, $this->format[0]*5/12, $posy, dol_htmlentitiesbr($Message_Top), 1, 'L');
-		
-		$posy += 3;
+			$pdf->SetFont('', 'B', $default_font_size);
+			$pdf->setCellPadding(4);
+			$posx = $Style_entete == 'center' ? $this->marge_gauche * 2 : $this->format[0]*5/12;
+			$pdf->writeHTMLCell($Style_entete == 'center' ? $this->page_largeur - $this->marge_gauche * 2 - $this->marge_droite * 2 : 0, 0, $posx, $posy, dol_htmlentitiesbr($Message_Top), 1, 'L');
+			print($pdf->GetY()."<br>");
+		}
+
+		$posy = 58;
 		$pdf->SetFont('', '', $default_font_size - 1);
+		$pdf->SetXY($posx, $posy);
 
 		// Show list of linked objects
 		$posy = pdf_writeLinkedObjects($pdf, $object, $outputlangs, $posx, $posy, 100, 3, 'R', $default_font_size);

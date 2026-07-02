@@ -23,6 +23,8 @@
  * \brief   FicheMag setup page.
  */
 
+// error_reporting(E_ALL);
+// ini_set('display_errors',1);
 
 // Load Dolibarr environment
 $res = 0;
@@ -194,33 +196,8 @@ $item->helpText = "Permettra la création d'un Qr code sur le PDF permettant de 
 
 // Setup conf for a selection of a boolean
 $item = $formSetup->newItem('FICHEMAG_ACTIVE_CODE_BARRE')->setAsYesNo();
-$item->nameText = "Affiché le Code Barre (seulement si le module est activé)";
+$item->nameText = "Affiché le Code Barre (seulement si le module code barre par default de Dolibarr est activé)";
 $item->helpText = "Cette option ne fonctionnera pas même si le module code barre par default de Dolibarr n'est pas activé.";
-
-// Add a title for a new section
-$item = $formSetup->newItem('NewSection')->setAsTitle();
-$item->nameText = 'Contenue du PDF (optionnel)';
-
-// Setup conf for selection of a simple string input
-$item = $formSetup->newItem('FICHEMAG_HOURLY_WEEK');
-$item->nameText = 'Horaire de semaine';
-$item->defaultFieldValue = 'Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30';
-$item->fieldAttr['placeholder'] = 'Du Lundi au Vendredi : x h x - x h x et x h x - x h x';
-$item->helpText = 'Horaire de semaine écrit dans le pied de page des PDF';
-
-// Setup conf for selection of a simple string input
-$item = $formSetup->newItem('FICHEMAG_HOURLY_WEEK_END');
-$item->nameText = "Horaire de fin de semaine";
-$item->defaultFieldValue = "Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30";
-$item->fieldAttr['placeholder'] = "Le samedi (fermé l'après-midi) : x h x - x h x";
-$item->helpText = 'Horaire de fin de semaine écrit dans le pied de page des PDF';
-
-// Setup conf for selection of a simple string input
-$item = $formSetup->newItem('FICHEMAG_ADDITIONAL_INFO');
-$item->nameText = "Information supplémentaire";
-$item->defaultFieldValue = "Fermé le Lundi matin, le dimanche et les jours fériés";
-$item->fieldAttr['placeholder'] = "Fermé le Lundi matin, le dimanche et les jours fériés";
-$item->helpText = 'Information supplémentaire écrit dans le pied de page des PDF';
 
 // Setup conf for a simple combo list
 $TField = array(
@@ -232,6 +209,56 @@ $TField = array(
 $item = $formSetup->newItem('FICHEMAG_CODE_BARR_STYLE')->setAsSelect($TField);
 $item->nameText = "Style du Code Barre";
 $item->helpText = "Style d'affichage du Code Barre quand tous les éléments sont présent dans le pied de page (QR-code + Code barre)";
+
+// Add a title for a new section
+$item = $formSetup->newItem('NewSection')->setAsTitle();
+$item->nameText = 'Contenue du PDF (optionnel)';
+
+// Setup conf for selection of a simple string input
+$item = $formSetup->newItem('FICHEMAG_HEAD_INFO')->setAsHtml();
+$item->nameText = 'Texte en entete';
+$item->defaultFieldValue = "ATTENTION, COMPTE TENU DES PERTURBATIONS ACTUELLES DU MARCHÉ INFORMATIQUE, LE PRIX INDIQUÉ SUR CETTE FICHE N'EST PAS FIXE POUR UNE DURÉE INDÉTERMINÉELE PRIX QUI S'APPLIQUE EST CELUI AFFICHÉ EN MAGASIN LE JOUR DE LA VENTE.";
+$item->fieldAttr['placeholder'] = "ATTENTION, COMPTE TENU DES PERTURBATIONS ACTUELLES DU MARCHÉ INFORMATIQUE, LE PRIX INDIQUÉ SUR CETTE FICHE N'EST PAS FIXE POUR UNE DURÉE INDÉTERMINÉE. LE PRIX QUI S'APPLIQUE EST CELUI AFFICHÉ EN MAGASIN LE JOUR DE LA VENTE.";
+$item->helpText = "Zone de texte en entete personalisable";
+
+// Setup conf for selection of a simple string input
+$item = $formSetup->newItem('FICHEMAG_HOURLY')->setAsHtml();
+$item->nameText = 'Horaire du magasin';
+$item->defaultFieldValue = 
+"Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30
+Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30
+Fermé le Lundi matin, le dimanche et les jours fériés";
+$item->fieldAttr['placeholder'] = 'Du Lundi au Vendredi : x h x - x h x et x h x - x h x';
+$item->helpText = 'Horaire du magasin écrit dans le pied de page des PDF';
+
+// Setup conf for a simple combo list
+$TField = array(
+	'Full' => 'Tel + Mail + Horaire',
+	'Mail_Horaire' => 'Mail + Horaire',
+	'Tel_Horaire' => 'Tel + Horaire',
+	'Contact' => 'Tel + Mail',
+	'Tel' => 'Tel',
+	'Mail' => 'Mail',
+	'Horaire' => 'Horaire',
+);
+
+$item = $formSetup->newItem('FICHEMAG_STYLE_CONTACT_HORAIRE')->setAsSelect($TField);
+$item->nameText = "Style du cadre contact - horaire";
+$item->helpText = "Style d'affichage du panneau contact - horaire, <strong>présence du numéro, du mail, des horaire ou non</strong>.<br> Le numéro de téléphone et le mail sont pris sur les valeur définis dans la configuration de la société.";
+
+// // Setup conf for selection of a simple string input
+// $item = $formSetup->newItem('FICHEMAG_HOURLY_WEEK_END')->setAsHtml();
+// $item->nameText = "Horaire de fin de semaine";
+// $item->defaultFieldValue = "Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30";
+// $item->fieldAttr['placeholder'] = "Le samedi (fermé l'après-midi) : x h x - x h x";
+// $item->helpText = 'Horaire de fin de semaine écrit dans le pied de page des PDF';
+
+// // Setup conf for selection of a simple string input
+// $item = $formSetup->newItem('FICHEMAG_ADDITIONAL_INFO')->setAsHtml();
+// $item->nameText = "Information supplémentaire";
+// $item->defaultFieldValue = "Fermé le Lundi matin, le dimanche et les jours fériés";
+// $item->fieldAttr['placeholder'] = "Fermé le Lundi matin, le dimanche et les jours fériés";
+// $item->helpText = 'Information supplémentaire écrit dans le pied de page des PDF';
 
 //$item = $formSetup->newItem('FICHEMAG_MYPARAM13')->setAsDate();	// Not yet implemented
 

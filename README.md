@@ -1,5 +1,10 @@
 # FICHEMAG FOR [DOLIBARR ERP & CRM](https://www.dolibarr.org)
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!Parlé de chaque composant : logo / attributs / marque / prix / qr code / code barre ...!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 ## Fonctionnalité
 
 Ce module offre un modèle de PDF pour le module produit.
