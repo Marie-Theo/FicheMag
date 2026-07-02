@@ -246,20 +246,6 @@ $item = $formSetup->newItem('FICHEMAG_STYLE_CONTACT_HORAIRE')->setAsSelect($TFie
 $item->nameText = "Style du cadre contact - horaire";
 $item->helpText = "Style d'affichage du panneau contact - horaire, <strong>présence du numéro, du mail, des horaire ou non</strong>.<br> Le numéro de téléphone et le mail sont pris sur les valeur définis dans la configuration de la société.";
 
-// // Setup conf for selection of a simple string input
-// $item = $formSetup->newItem('FICHEMAG_HOURLY_WEEK_END')->setAsHtml();
-// $item->nameText = "Horaire de fin de semaine";
-// $item->defaultFieldValue = "Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30";
-// $item->fieldAttr['placeholder'] = "Le samedi (fermé l'après-midi) : x h x - x h x";
-// $item->helpText = 'Horaire de fin de semaine écrit dans le pied de page des PDF';
-
-// // Setup conf for selection of a simple string input
-// $item = $formSetup->newItem('FICHEMAG_ADDITIONAL_INFO')->setAsHtml();
-// $item->nameText = "Information supplémentaire";
-// $item->defaultFieldValue = "Fermé le Lundi matin, le dimanche et les jours fériés";
-// $item->fieldAttr['placeholder'] = "Fermé le Lundi matin, le dimanche et les jours fériés";
-// $item->helpText = 'Information supplémentaire écrit dans le pied de page des PDF';
-
 //$item = $formSetup->newItem('FICHEMAG_MYPARAM13')->setAsDate();	// Not yet implemented
 
 // End of definition of parameters
