@@ -171,7 +171,13 @@ class modFicheMag extends DolibarrModules
 		// Example: $this->const=array(1 => array('FICHEMAG_MYNEWCONST1', 'chaine', 'myvalue', 'This is a constant to add', 1),
 		//                             2 => array('FICHEMAG_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
 		// );
-		$this->const = array();
+		$this->const = array(
+			1 => array('FICHEMAG_ACTIVE_CODE_BARRE',	'chaine', "1", 		"Activer ou non le Code-barre sur le PDF sans à retirer le module.", 1,'current'),
+			2 => array('FICHEMAG_CODE_BARR_STYLE', 		'chaine', "Style 3","Emplacement du Code-barre si le QR code est aussi présent.", 1,'current'),
+			3 => array('FICHEMAG_HEAD_INFO', 			'chaine', "ATTENTION, COMPTE TENU DES PERTURBATIONS ACTUELLES DU MARCHÉ INFORMATIQUE, LE PRIX INDIQUÉ SUR CETTE FICHE <u>N'EST PAS FIXE POUR UNE DURÉE INDÉTERMINÉE</u>. <u>LE PRIX QUI S'APPLIQUE EST CELUI AFFICHÉ EN MAGASIN LE JOUR DE LA VENTE.</u>", 1,"Texte en en-tête du PDF (information complémentaire)", 'current'),
+			4 => array('FICHEMAG_HOURLY', 				'chaine', "Du Lundi au Vendredi : 9 h 30 - 12 h 30 et 13 h 30 - 18 h 30<br>Le samedi (fermé l'après-midi) : 9 h 30 - 12 h 30<br>Fermé le Lundi matin, le dimanche et les jours fériés", "Zone horaire du magasin", 1,"current"),
+			5 => array('FICHEMAG_STYLE_CONTACT_HORAIRE','chaine', 'Full', 	"Affichage du contact ou non.", 1,"current"),
+		);
 
 		// Some keys to add into the overwriting translation tables
 		/*$this->overwrite_translation = array(
@@ -292,23 +298,23 @@ class modFicheMag extends DolibarrModules
 		$r = 0;
 		// Add here entries to declare new permissions
 		/* BEGIN MODULEBUILDER PERMISSIONS */
-		/*
 		$o = 1;
 		$this->rights[$r][0] = $this->numero . sprintf("%02d", ($o * 10) + 1); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Read objects of FicheMag'; // Permission label
-		$this->rights[$r][4] = 'myobject';
+		$this->rights[$r][1] = 'Read PDF of FicheMag'; // Permission label
+		$this->rights[$r][4] = 'PDF';
 		$this->rights[$r][5] = 'read'; // In php code, permission will be checked by test if ($user->hasRight('fichemag', 'myobject', 'read'))
 		$r++;
 		$this->rights[$r][0] = $this->numero . sprintf("%02d", ($o * 10) + 2); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Create/Update objects of FicheMag'; // Permission label
-		$this->rights[$r][4] = 'myobject';
+		$this->rights[$r][1] = 'Create/Update PDF of FicheMag'; // Permission label
+		$this->rights[$r][4] = 'PDF';
 		$this->rights[$r][5] = 'write'; // In php code, permission will be checked by test if ($user->hasRight('fichemag', 'myobject', 'write'))
 		$r++;
 		$this->rights[$r][0] = $this->numero . sprintf("%02d", ($o * 10) + 3); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Delete objects of FicheMag'; // Permission label
-		$this->rights[$r][4] = 'myobject';
+		$this->rights[$r][1] = 'Delete PDF of FicheMag'; // Permission label
+		$this->rights[$r][4] = 'PDF';
 		$this->rights[$r][5] = 'delete'; // In php code, permission will be checked by test if ($user->hasRight('fichemag', 'myobject', 'delete'))
 		$r++;
+		/*
 		*/
 		/* END MODULEBUILDER PERMISSIONS */
 
